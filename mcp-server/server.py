@@ -1,291 +1,145 @@
 #!/usr/bin/env python3
-"""
-MCP Server for Energy Consumption API
-Listens for RPC requests and processes them using RabbitMQ.
-"""
-
 import json
 import logging
 import os
+import re
 import signal
 import sys
 import time
 from datetime import datetime
+from typing import Dict, Any
 
 import pika
-
 from rabbitmq.rabbitMqClient import RabbitMqClient
+from site_lookup import SiteLookUp
 
-logger = logging.getLogger(__name__)
+# --- Configuration & Logging ---
+RABBITMQ_QUEUE = os.getenv("RABBITMQ_QUEUE", "energy_request_queue")
+SITE_MAPPING_FILE = "site_mapping.json"
+
 logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
+    level=logging.INFO,
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
-
-
-class SiteManager:
-    pass
+logger = logging.getLogger("EnergyMCPServer")
 
 
 class EnergyMCPServer:
     def __init__(self):
-        self.site_manager = SiteManager()
+        self.site_lookup = SiteLookUp()
         self.rabbitmq = RabbitMqClient()
-        self.request_queue = os.getenv("RABBITMQ_QUEUE", "energy_request_queue")
+        self.is_running = True
 
-        self.site_lookup = {}
-        self.site_names = []
+        # Handle process signals
+        signal.signal(signal.SIGINT, self._handle_exit)
+        signal.signal(signal.SIGTERM, self._handle_exit)
 
-        self.load_site_mapping()
+    def _handle_exit(self, signum, frame):
+        logger.info("Shutdown signal received.")
+        self.is_running = False
+        self.rabbitmq.close()
+        sys.exit(0)
 
-        # Graceful shutdown
-        signal.signal(signal.SIGINT, self.shutdown)
-        signal.signal(signal.SIGTERM, self.shutdown)
+    def parse_query(self, query: str) -> Dict[str, Any]:
+        """Processes natural language query to find site and fetch energy data."""
+        # 1. Parse the Date Range first
+        # This uses your SiteLookUp logic for "yesterday", "last 7 days", etc.
+        date_info = self.site_lookup.parse_date_range(query)
 
-    def load_site_mapping(self):
-        """Load site mapping from JSON"""
-        try:
-            with open("site_mapping.json", "r") as f:
-                data = json.load(f)
+        # 2. Extract the Site Name/Subject
+        # Logic: Strip prefixes and date markers to isolate the site name
+        subject = re.sub(r'^(get|show me|energy (consumption|usage) of)\s+', '', query, flags=re.IGNORECASE)
+        # Remove the date portion from the subject so it doesn't confuse the lookup
+        subject = re.split(r'\s+(for|last|yesterday|today)\b', subject, flags=re.IGNORECASE)[0].strip()
 
-            for site in data.get("sites", []):
-                site_id = site["site_id"]
-                main_name = site["name"].strip().lower()
-
-                self.site_lookup[main_name] = site_id
-                self.site_names.append(site["name"])
-
-                for alias in site.get("aliases", []):
-                    self.site_lookup[alias.strip().lower()] = site_id
-
-            logger.info(f"Loaded {len(self.site_lookup)} site mappings")
-
-        except Exception as e:
-            logger.error(f"Failed to load site_mapping.json: {e}")
-            raise
-
-    def lookup_site_id(self, site_name: str):
-        if not site_name:
-            return None
-
-        name_lower = site_name.strip().lower()
-
-        if name_lower in self.site_lookup:
-            return self.site_lookup[name_lower]
-
-        for stored_name, site_id in self.site_lookup.items():
-            if name_lower in stored_name or stored_name in name_lower:
-                logger.info(f"Partial match: '{site_name}' → '{stored_name}'")
-                return site_id
-
-        return None
-
-    def get_energy_consumption(self, site_id: str, site_name: str):
-        logger.info(f"Fetching energy data for {site_name} (ID: {site_id})")
-
-        mock_data = {
-            "HK-001": {"consumption": 1250, "unit": "MWh", "date": "2024-01-15"},
-            "SG-002": {"consumption": 890, "unit": "MWh", "date": "2024-01-15"},
-            "LD-003": {"consumption": 2100, "unit": "MWh", "date": "2024-01-15"},
-        }
-
-        return mock_data.get(
-            site_id,
-            {
-                "consumption": "N/A",
-                "unit": "kWh",
-                "error": "No data available for this site",
-            },
-        )
-
-    def process_query(self, query: str) -> dict:
-        """
-        Process natural language query for energy consumption
-
-        Examples:
-        - "energy consumption of E2E Validation-flagged-breakers for last 7 days"
-        - "show me energy usage for site 469904 today"
-        - "energy consumption of Hong Kong site for yesterday"
-        """
-        query_lower = query.lower()
-
-        # Extract site name
-        # Look for patterns like "of X for" or "for site X"
-        site_name = None
-
-        # Pattern 1: "of [site name] for"
-        if " of " in query_lower:
-            parts = query_lower.split(" of ")
-            if len(parts) > 1:
-                site_part = parts[1]
-                if " for " in site_part:
-                    site_name = site_part.split(" for ")[0].strip()
-                elif " yesterday" in site_part:
-                    site_name = site_part.split(" yesterday")[0].strip()
-                elif " today" in site_part:
-                    site_name = site_part.split(" today")[0].strip()
-                elif " last " in site_part:
-                    site_name = site_part.split(" last ")[0].strip()
-                else:
-                    site_name = site_part.strip()
-
-        # Pattern 2: "for site [name]"
-        if not site_name and " for site " in query_lower:
-            parts = query_lower.split(" for site ")
-            if len(parts) > 1:
-                site_part = parts[1]
-                if " for " in site_part:
-                    site_name = site_part.split(" for ")[0].strip()
-                else:
-                    site_name = site_part.strip()
-
-        # Pattern 3: Just extract any site-like name (simple approach)
-        if not site_name:
-            # Remove common phrases
-            cleaned = query_lower.replace("energy consumption of ", "")
-            cleaned = cleaned.replace("energy usage of ", "")
-            cleaned = cleaned.replace("show me ", "")
-            cleaned = cleaned.replace("get ", "")
-
-            # Split by common separators
-            for separator in [" for ", " yesterday", " today", " last "]:
-                if separator in cleaned:
-                    site_name = cleaned.split(separator)[0].strip()
-                    break
-
-            if not site_name:
-                site_name = cleaned.strip()
-
-        # Parse date range
-        date_range = self.site_manager.parse_date_range(query_lower)
-
-        # Find site ID
-        site_id = self.site_manager.find_site_id(site_name)
+        # 3. Find the Site ID
+        site_id = self.site_lookup.find_site_id(subject or query)
 
         if not site_id:
-            # Try to extract numeric ID directly
-            import re
-
-            numbers = re.findall(r"\b\d{5,6}\b", query)
-            if numbers:
-                site_id = numbers[0]
-
-        if not site_id:
+            # Get a few real site names for suggestions
+            all_sites = self.site_lookup.list_all_sites()
+            suggestions = [s['title'] for s in all_sites[:5]]
             return {
-                "error": f"Site '{site_name}' not found",
-                "available_sites": self.site_manager.list_all_sites()[
-                    :10
-                ],  # Show first 10
+                "error": f"Could not identify site from query: '{subject}'",
+                "suggestions": suggestions
             }
 
-        # Get energy consumption
-        energy_data = self.site_manager.get_energy_consumption(
-            site_id, date_range["from"], date_range["to"]
+        # 4. Get the Data
+        # We pass the parsed from/to dates into the API call
+        energy_data = self.site_lookup.get_energy_consumption(
+            site_id=site_id,
+            from_date=date_info["from"],
+            to_date=date_info["to"]
         )
 
-        # Get site details
-        site_details = self.site_manager.get_site_details(site_id)
+        # 5. Fetch site details for a richer response
+        site_details = self.site_lookup.get_site_details(site_id)
 
         return {
             "query": query,
             "site": {
                 "id": site_id,
-                "name": site_details["title"] if site_details else site_name,
-                "city": site_details.get("city") if site_details else None,
-                "country": site_details.get("country") if site_details else None,
+                "title": site_details.get("title") if site_details else subject,
+                "city": site_details.get("city") if site_details else "N/A"
             },
-            "period": date_range["description"],
-            "energy_consumption": energy_data,
-            "timestamp": datetime.now().isoformat(),
+            "period": date_info["description"],
+            "data": energy_data,
+            "timestamp": datetime.now().isoformat()
         }
 
-
-def on_request(self, ch, method, props, body):
-    """Handle incoming RPC requests"""
-    try:
-        request = json.loads(body)
-        query = request.get("query", "")
-
-        logger.info(f"Processing query: {query}")
-
-        # Process the query
-        result = self.process_query(query)
-
-        # Send reply using RabbitMqClient
-        self.rabbitmq.reply(
-            reply_to=props.reply_to, correlation_id=props.correlation_id, body=result
-        )
-        ch.basic_ack(delivery_tag=method.delivery_tag)
-        logger.info(f"Sents response for query")
-    except Exception as e:
-        logger.error(f"Error processing request: {e}")
-        error_response = {"error": str(e)}
-        ch.basic_publish(
-            exchange="",
-            routing_key=props.reply_to,
-            properties=pika.BasicProperties(correlation_id=props.correlation_id),
-            body=json.dumps(error_response),
-        )
-        ch.basic_ack(delivery_tag=method.delivery_tag)
-
-
-def _send_error(self, ch, method, props, error_msg: str):
-    """Safely send error response and acknowledge message"""
-    try:
-        self.rabbitmq.reply(
-            reply_to=props.reply_to,
-            correlation_id=props.correlation_id,
-            body={"error": error_msg},
-        )
-    except Exception as reply_error:
-        logger.warning(f"Failed to send error reply: {reply_error}")
-
-    # Always acknowledge the message to prevent redelivery loops
-    try:
-        ch.basic_ack(delivery_tag=method.delivery_tag)
-    except Exception as ack_error:
-        logger.warning(f"Failed to ack message: {ack_error}")
-
-
-def start(self):
-    """Start server with reconnection logic"""
-    logger.info("Starting Energy MCP Server...")
-
-    while True:
+    def on_request(self, ch, method, props, body):
+        """Standard RabbitMQ RPC callback."""
         try:
-            self.rabbitmq.connect()
-            self.rabbitmq.declare_queue(self.request_queue)
-            self.rabbitmq.basic_qos(prefetch_count=1)
+            data = json.loads(body)
+            query = data.get("query", "")
+            logger.info(f"RPC Request: {query}")
 
-            self.rabbitmq.channel.basic_consume(
-                queue=self.request_queue,
-                on_message_callback=self.on_request,
-                auto_ack=False,
+            response = self.parse_query(query)
+            # {'data': {'energy': 503.15, 'unit': 'kWh'}, 'period': 'last 7 days (default)', 'query': "'E2E Validation-flagged-breaker", 'site': {'city': 'Hong Kong', 'id': '474154', 'title': 'E2E Validation'}, 'timestamp': '2026-04-10T18:10:16.122645'}
+
+
+            self.rabbitmq.reply(
+                reply_to=props.reply_to,
+                correlation_id=props.correlation_id,
+                body=response
             )
-
-            logger.info(f"Server listening on queue: {self.request_queue}")
-            self.rabbitmq.channel.start_consuming()
-
-        except (
-            pika.exceptions.AMQPConnectionError,
-            pika.exceptions.AMQPChannelError,
-        ) as e:
-            logger.warning(f"Connection lost: {e}. Reconnecting in 5s...")
-            time.sleep(5)
-        except KeyboardInterrupt:
-            logger.info("Shutdown requested.")
-            break
+            ch.basic_ack(delivery_tag=method.delivery_tag)
         except Exception as e:
-            logger.error(f"Unexpected error: {e}")
-            time.sleep(5)
+            logger.error(f"Callback error: {e}")
+            self._send_error(ch, method, props, str(e))
 
-    self.shutdown()
+    def _send_error(self, ch, method, props, error_msg: str):
+        try:
+            err_body = json.dumps({"error": error_msg})
+            ch.basic_publish(
+                exchange="",
+                routing_key=props.reply_to,
+                properties=pika.BasicProperties(correlation_id=props.correlation_id),
+                body=err_body,
+            )
+            ch.basic_ack(delivery_tag=method.delivery_tag)
+        except Exception as e:
+            logger.error(f"Critical failure sending error response: {e}")
 
+    def start(self):
+        """Main loop with reconnection logic."""
+        logger.info(f"Energy MCP Server starting on queue: {RABBITMQ_QUEUE}")
 
-def shutdown(self, *args):
-    logger.info("Shutting down server...")
-    self.rabbitmq.close()
-    sys.exit(0)
-
+        while self.is_running:
+            try:
+                self.rabbitmq.connect()
+                self.rabbitmq.declare_queue(RABBITMQ_QUEUE)
+                self.rabbitmq.channel.basic_qos(prefetch_count=1)
+                self.rabbitmq.channel.basic_consume(
+                    queue=RABBITMQ_QUEUE,
+                    on_message_callback=self.on_request
+                )
+                self.rabbitmq.channel.start_consuming()
+            except (pika.exceptions.AMQPError, Exception) as e:
+                if not self.is_running:
+                    break
+                logger.warning(f"Connection lost ({e}). Retrying in 5 seconds...")
+                time.sleep(5)
 
 if __name__ == "__main__":
     server = EnergyMCPServer()

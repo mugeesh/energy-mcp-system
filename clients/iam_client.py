@@ -29,7 +29,7 @@ class IAMClient:
             header_in = {"Content-Type": "application/json"}
             payload = {"email": self.username, "password": self.password}
             iam_return = requests.post(
-                self.base_url + "/api/v1/auth/login",
+                self.base_url + "/auth/login",
                 data=json.dumps(payload),
                 headers=header_in,
             )
@@ -41,7 +41,7 @@ class IAMClient:
     def get_user_by_id(self, user_id):
         try:
             iam_response = requests.get(
-                self.base_url + f"/api/v1/users/{user_id}", headers=self.get_headers()
+                self.base_url + f"/users/{user_id}", headers=self.get_headers()
             )
             return iam_response
         except Exception as e:

@@ -22,16 +22,19 @@ class TSApi:
         self.iam_token = iam_token
 
     def get_energy_consumption_by_site_id(self, site_id, from_date, to_date):
-        url = f"{self.ts_api_url}/energy/site/{site_id}/consumption"
-        params = {"from": from_date, "to": to_date}
-        logger.info(
-            f"Fetching energy data for site {site_id} from {from_date} to {to_date}"
-        )
-
-        response = requests.get(
-            url, params=params, headers=self.get_headers(), timeout=30
-        )
-        response.raise_for_status()
+        try:
+            url = f"{self.ts_api_url}/energy/site/{site_id}/consumption"
+            params = {"from": from_date, "to": to_date}
+            logger.info(
+                f"Fetching energy data for site {site_id} from {from_date} to {to_date}"
+            )
+            response = requests.get(
+                url, params=params, headers=self.get_headers(), timeout=30
+            )
+            response.raise_for_status()
+            return response
+        except Exception as e:
+            logging.error("Error fetching access token: " + str(e))
 
     def get_headers(self):
         return {"Content-Type": "application/json", "authorization": self.iam_token}

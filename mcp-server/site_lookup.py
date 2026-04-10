@@ -2,16 +2,11 @@
 """
 Site Manager - Handles site mapping and energy consumption API calls
 """
-
-import json
 import logging
 import os
 import sys
 from datetime import datetime, timedelta
 from typing import Dict, List, Optional
-
-import requests
-
 from clients.iam_client import IAMClient
 from clients.ts_api import TSApi
 
@@ -22,7 +17,7 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
-class SiteManager:
+class SiteLookUp:
     def __init__(self):
         self.sites_cache = None
         self.site_lookup = {}
@@ -118,10 +113,7 @@ class SiteManager:
             )
             data = response.json()
             return {
-                "site_id": site_id,
-                "from_date": from_date,
-                "to_date": to_date,
-                "energy_kwh": data.get("energy", 0),
+                "energy": data['energy'],
                 "unit": "kWh",
             }
 
@@ -188,7 +180,7 @@ class SiteManager:
         # Default to last 7 days if no match
         from_date = now - timedelta(days=7)
         from_date = from_date.replace(hour=0, minute=0, second=0, microsecond=0)
-        to_date = now
+        to_date = now.replace(hour=0, minute=0, second=0, microsecond=0)
         return {
             "from": from_date.isoformat() + "Z",
             "to": to_date.isoformat() + "Z",
@@ -214,7 +206,7 @@ class SiteManager:
 
 if __name__ == "__main__":
     # Test the site manager
-    sm = SiteManager()
+    sm = SiteLookUp()
     print("Testing Site Manager...")
 
     # List sites

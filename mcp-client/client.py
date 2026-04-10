@@ -11,7 +11,7 @@ import time
 import uuid
 from datetime import datetime
 
-# Fixed import - use consistent naming
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from rabbitmq.rabbitMqClient import RabbitMqClient
 
 logger = logging.getLogger(__name__)
@@ -59,18 +59,18 @@ class EnergyMCPClient:
 
     # =========================================================
 
-    def call(self, site_name: str, timeout: int = 30) -> dict:
+    def call(self, query: str, timeout: int = 300) -> dict:
         """
         High-level RPC method
         """
-        if not site_name or not str(site_name).strip():
+        if not query or not str(query).strip():
             return {"error": "Site name is required"}
 
         correlation_id = str(uuid.uuid4())
         self.responses[correlation_id] = None
 
         request = {
-            "site_name": str(site_name).strip(),
+            "query": str(query).strip(),
             "request_time": datetime.now().isoformat(),
         }
 
@@ -82,7 +82,7 @@ class EnergyMCPClient:
                 reply_to=self.callback_queue,
             )
 
-            logger.info(f"RPC call sent for site: '{site_name}'")
+            logger.info(f"RPC call sent for site: '{query}'")
 
             # Wait for response
             start_time = time.time()
@@ -90,7 +90,7 @@ class EnergyMCPClient:
                 self.rabbitmq.connection.process_data_events(time_limit=0.1)
 
                 if time.time() - start_time > timeout:
-                    logger.error(f"RPC timeout for '{site_name}' after {timeout}s")
+                    logger.error(f"RPC timeout for '{query}' after {timeout}s")
                     self.responses.pop(correlation_id, None)
                     return {"error": f"Timeout after {timeout} seconds"}
 
@@ -120,14 +120,14 @@ def interactive_mode():
 
     try:
         while True:
-            site = input("\n🔍 Enter site name (or 'quit'): ").strip()
-            if site.lower() in ["quit", "exit", "q"]:
+            query = input("\n🔍 Enter site name (or 'quit'): ").strip()
+            if query.lower() in ["quit", "exit", "q"]:
                 break
-            if not site:
+            if not query:
                 continue
 
-            print(f"📡 Sending request for '{site}'...")
-            result = client.call(site)
+            print(f"📡 Sending request for '{query}'...")
+            result = client.call(query)
 
             print("\n" + "-" * 50)
             if "error" in result:
