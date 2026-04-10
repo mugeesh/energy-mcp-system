@@ -1,197 +1,160 @@
 #!/usr/bin/env python3
 """
-MCP Client for Energy Consumption API
-Sends requests to server and receives responses
+Clean MCP Client with High-Level RPC - FIXED
 """
 
-import pika
 import json
-import uuid
-import time
-from datetime import datetime
 import logging
-import sys
 import os
-# Setup logging
-logging.basicConfig(level=logging.INFO)
+import sys
+import time
+import uuid
+from datetime import datetime
+
+# Fixed import - use consistent naming
+from rabbitmq.rabbitMqClient import RabbitMqClient
+
 logger = logging.getLogger(__name__)
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
+)
+
 
 class EnergyMCPClient:
     def __init__(self):
-        self.rabbitmq_host = 'localhost'
-        self.request_queue = 'energy_request_queue'
-        self.rabbitmq_host = os.getenv('RABBITMQ_HOST', 'localhost')
-        self.rabbitmq_port =5672
-        self.request_queue = 'energy_request_queue'
+        self.rabbitmq = RabbitMqClient()
+        self.request_queue = os.getenv("RABBITMQ_QUEUE", "energy_request_queue")
+        self.responses = {}  # correlation_id -> response
+        self.callback_queue = "amq.rabbitmq.reply-to"
 
-        # Store responses
-        self.responses = {}
-        self.connection = None
-        self.channel = None
-        self.callback_queue = None
-
-        # Connect to RabbitMQ
         self.setup_rabbitmq()
-    
+
     def setup_rabbitmq(self):
-        """Setup RabbitMQ connection and callback queue"""
-        try:
-            credentials = pika.PlainCredentials('admin', 'password123')
-            parameters = pika.ConnectionParameters(
-                host=self.rabbitmq_host,
-                port=self.rabbitmq_port,
-                virtual_host='/',
-                credentials=credentials
-            )
-            # 3. Establish the connection
-            self.connection = pika.BlockingConnection(parameters)
-            self.channel = self.connection.channel()
-            
-            # Use Direct Reply-To (no queue creation needed)
-            self.callback_queue = 'amq.rabbitmq.reply-to'
-            
-            # Consume from the direct reply-to queue
-            self.channel.basic_consume(
-                queue=self.callback_queue,
-                on_message_callback=self.on_response,
-                auto_ack=True
-            )
-            
-            logger.info(f"Connected to RabbitMQ at {self.rabbitmq_host}")
-        except Exception as e:
-            logger.error(f"Failed to connect to RabbitMQ: {e}")
-            raise
-    
-    def on_response(self, ch, method, props, body):
-        """Handle response from server"""
-        correlation_id = props.correlation_id
-        if correlation_id in self.responses:
-            self.responses[correlation_id] = json.loads(body)
-            logger.info(f"Received response for request {correlation_id[:8]}")
-    
-    def get_energy_consumption(self, site_name):
-        """
-        Send request to get energy consumption for a site
-        
-        Args:
-            site_name: Name of the site (e.g., "Hong Kong", "Singapore")
-        
-        Returns:
-            Response dictionary with energy data
-        """
-        # Generate unique correlation ID
-        correlation_id = str(uuid.uuid4())
-        
-        # Prepare request
-        request = {
-            "site_name": site_name,
-            "request_time": datetime.now().isoformat()
-        }
-        
-        # Store placeholder for response
-        self.responses[correlation_id] = None
-        
-        # Publish request
-        self.channel.basic_publish(
-            exchange='',
-            routing_key=self.request_queue,
-            properties=pika.BasicProperties(
-                reply_to=self.callback_queue,
-                correlation_id=correlation_id,
-                content_type='application/json'
-            ),
-            body=json.dumps(request)
+        """Initialize connection and start listening for replies"""
+        self.rabbitmq.connect()
+
+        self.rabbitmq.channel.basic_consume(
+            queue=self.callback_queue,
+            on_message_callback=self.on_response,
+            auto_ack=True,
         )
-        
-        logger.info(f"Sent request for '{site_name}' (ID: {correlation_id[:8]})")
-        
-        # Wait for response (with timeout)
-        timeout = 100*10  # seconds
-        start_time = time.time()
-        
-        while self.responses[correlation_id] is None:
-            # Process incoming messages
-            self.connection.process_data_events()
-            
-            # Check timeout
-            if time.time() - start_time > timeout:
-                logger.error(f"Timeout waiting for response for {site_name}")
-                return {"error": "Request timeout"}
-            
-            time.sleep(0.1)
-        
-        # Clean up
-        response = self.responses[correlation_id]
-        del self.responses[correlation_id]
-        
-        return response
-    
+        logger.info("MCP Client ready - using Direct Reply-To")
+
+    # ==================== FIXED CALLBACK ====================
+    def on_response(self, ch, method, props, body):
+        """Handle incoming response from server - CORRECT SIGNATURE"""
+        correlation_id = props.correlation_id if props else None
+
+        if correlation_id and correlation_id in self.responses:
+            try:
+                self.responses[correlation_id] = json.loads(body)
+                logger.debug(f"Response received for {correlation_id[:8]}...")
+            except Exception as e:
+                logger.warning(f"Failed to parse response: {e}")
+                self.responses[correlation_id] = {"error": "Invalid response format"}
+        else:
+            logger.warning(
+                f"Received response with unknown correlation_id: {correlation_id}"
+            )
+
+    # =========================================================
+
+    def call(self, site_name: str, timeout: int = 30) -> dict:
+        """
+        High-level RPC method
+        """
+        if not site_name or not str(site_name).strip():
+            return {"error": "Site name is required"}
+
+        correlation_id = str(uuid.uuid4())
+        self.responses[correlation_id] = None
+
+        request = {
+            "site_name": str(site_name).strip(),
+            "request_time": datetime.now().isoformat(),
+        }
+
+        try:
+            self.rabbitmq.publish(
+                queue=self.request_queue,
+                body=request,  # dict is handled inside publish()
+                correlation_id=correlation_id,
+                reply_to=self.callback_queue,
+            )
+
+            logger.info(f"RPC call sent for site: '{site_name}'")
+
+            # Wait for response
+            start_time = time.time()
+            while self.responses[correlation_id] is None:
+                self.rabbitmq.connection.process_data_events(time_limit=0.1)
+
+                if time.time() - start_time > timeout:
+                    logger.error(f"RPC timeout for '{site_name}' after {timeout}s")
+                    self.responses.pop(correlation_id, None)
+                    return {"error": f"Timeout after {timeout} seconds"}
+
+                time.sleep(0.05)
+
+            response = self.responses.pop(correlation_id)
+            return response
+
+        except Exception as e:
+            logger.exception(f"RPC call failed for '{site_name}'")
+            self.responses.pop(correlation_id, None)
+            return {"error": f"RPC failed: {str(e)}"}
+
     def close(self):
-        """Close connection"""
-        if self.connection and self.connection.is_open:
-            self.connection.close()
-            logger.info("Connection closed")
+        self.rabbitmq.close()
+        logger.info("MCP Client closed")
+
+
+# ====================== CLI ======================
+
 
 def interactive_mode():
-    """Run client in interactive mode"""
     client = EnergyMCPClient()
-    
-    print("\n" + "="*50)
-    print("🌱 Energy Consumption MCP Client")
-    print("="*50)
-    print("\nAvailable sites: Hong Kong, Singapore, London")
-    print("Type 'quit' or 'exit' to stop\n")
-    
+    print("\n" + "=" * 60)
+    print("🌍 Energy MCP Client - High-Level RPC")
+    print("=" * 60)
+
     try:
         while True:
-            # Get user input
-            site_name = input("\n🔍 Enter site name: ").strip()
-            
-            if site_name.lower() in ['quit', 'exit', 'q']:
-                print("Goodbye! 👋")
+            site = input("\n🔍 Enter site name (or 'quit'): ").strip()
+            if site.lower() in ["quit", "exit", "q"]:
                 break
-            
-            if not site_name:
-                print("❌ Please enter a site name")
+            if not site:
                 continue
-            
-            # Send request
-            print(f"📡 Querying energy consumption for '{site_name}'...")
-            response = client.get_energy_consumption(site_name)
-            
-            # Display response
-            print("\n" + "-"*40)
-            if "error" in response:
-                print(f"❌ Error: {response['error']}")
-                if "available_sites" in response:
-                    print(f"💡 Available sites: {', '.join(response['available_sites'])}")
+
+            print(f"📡 Sending request for '{site}'...")
+            result = client.call(site)
+
+            print("\n" + "-" * 50)
+            if "error" in result:
+                print(f"❌ Error: {result['error']}")
+                if "available_sites" in result:
+                    print(f"Available: {', '.join(result.get('available_sites', []))}")
             else:
-                print(f"✅ Site: {response['site_name']}")
-                print(f"📌 Site ID: {response['site_id']}")
-                print(f"⚡ Consumption: {response['consumption']['consumption']} {response['consumption']['unit']}")
-                print(f"📅 Date: {response['consumption']['date']}")
-                print(f"🕐 Query time: {response['timestamp']}")
-            print("-"*40)
-    
+                cons = result.get("consumption", {})
+                print(f"✅ Site       : {result.get('site_name')}")
+                print(f"📌 Site ID    : {result.get('site_id')}")
+                print(f"⚡ Consumption: {cons.get('consumption')} {cons.get('unit')}")
+                print(f"📅 Date       : {cons.get('date')}")
+            print("-" * 50)
+
     except KeyboardInterrupt:
-        print("\n\n👋 Goodbye!")
+        print("\n👋 Goodbye!")
     finally:
         client.close()
 
-def single_query_mode(site_name):
-    """Run a single query"""
-    client = EnergyMCPClient()
-    try:
-        print(f"Querying {site_name}...")
-        response = client.get_energy_consumption(site_name)
-        print(json.dumps(response, indent=2))
-    finally:
-        client.close()
 
 if __name__ == "__main__":
     if len(sys.argv) > 1:
-        # Single query mode
-        single_query_mode(sys.argv[1])
+        client = EnergyMCPClient()
+        try:
+            resp = client.call(sys.argv[1])
+            print(json.dumps(resp, indent=2))
+        finally:
+            client.close()
     else:
-        # Interactive mode
         interactive_mode()
