@@ -1,0 +1,19 @@
+{
+  "sites": [
+    {
+      "name": "Hong Kong",
+      "site_id": "HK-001",
+      "aliases": ["HK", "Hongkong", "Hong Kong Site"]
+    },
+    {
+      "name": "Singapore",
+      "site_id": "SG-002",
+      "aliases": ["SG", "Singapore Site"]
+    },
+    {
+      "name": "London",
+      "site_id": "LD-003",
+      "aliases": ["LD", "London UK"]
+    }
+  ]
+}
