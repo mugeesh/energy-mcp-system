@@ -2,11 +2,13 @@
 """
 Site Manager - Handles site mapping and energy consumption API calls
 """
+
 import logging
 import os
 import sys
 from datetime import datetime, timedelta
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional
+
 from clients.iam_client import IAMClient
 from clients.ts_api import TSApi
 
@@ -113,7 +115,7 @@ class SiteLookUp:
             )
             data = response.json()
             return {
-                "energy": data['energy'],
+                "energy": data["energy"],
                 "unit": "kWh",
             }
 
@@ -121,70 +123,30 @@ class SiteLookUp:
             logger.error(f"Failed to get energy consumption: {e}")
             return {"error": str(e), "site_id": site_id}
 
-    def parse_date_range(self, query: str) -> Dict:
-        """
-        Parse natural language date ranges like 'today', 'last 7 days', 'yesterday'
-        """
-        query_lower = query.lower()
-        now = datetime.now()
+    def parse_date_range(self, day_input: Any) -> Dict:
+        # 1. Capture "now" and strip microseconds immediately
+        now = datetime.now().replace(microsecond=0)
 
-        # Today
-        if "today" in query_lower:
-            from_date = now.replace(hour=0, minute=0, second=0, microsecond=0)
-            to_date = now
-            return {
-                "from": from_date.isoformat() + "Z",
-                "to": to_date.isoformat() + "Z",
-                "description": "today",
-            }
+        try:
+            days = int(day_input)
+        except ValueError, TypeError:
+            days = 7
 
-        # Yesterday
-        if "yesterday" in query_lower:
-            yesterday = now - timedelta(days=1)
-            from_date = yesterday.replace(hour=0, minute=0, second=0, microsecond=0)
-            to_date = yesterday.replace(
-                hour=23, minute=59, second=59, microsecond=999999
-            )
-            return {
-                "from": from_date.isoformat() + "Z",
-                "to": to_date.isoformat() + "Z",
-                "description": "yesterday",
-            }
+        if days <= 0:
+            days = 7
 
-        # Last X days
-        import re
+        # 2. Calculate Start Date (00:00:00)
+        from_date = (now - timedelta(days=days)).replace(
+            hour=0, minute=0, second=0, microsecond=0
+        )
 
-        days_match = re.search(r"last\s+(\d+)\s+days?", query_lower)
-        if days_match:
-            days = int(days_match.group(1))
-            from_date = now - timedelta(days=days)
-            from_date = from_date.replace(hour=0, minute=0, second=0, microsecond=0)
-            to_date = now
-            return {
-                "from": from_date.isoformat() + "Z",
-                "to": to_date.isoformat() + "Z",
-                "description": f"last {days} days",
-            }
+        # 3. Use the clean 'now' for the to_date
+        to_date = now
 
-        # Last week
-        if "last week" in query_lower:
-            from_date = now - timedelta(days=7)
-            from_date = from_date.replace(hour=0, minute=0, second=0, microsecond=0)
-            to_date = now
-            return {
-                "from": from_date.isoformat() + "Z",
-                "to": to_date.isoformat() + "Z",
-                "description": "last 7 days",
-            }
-
-        # Default to last 7 days if no match
-        from_date = now - timedelta(days=7)
-        from_date = from_date.replace(hour=0, minute=0, second=0, microsecond=0)
-        to_date = now.replace(hour=0, minute=0, second=0, microsecond=0)
         return {
             "from": from_date.isoformat() + "Z",
             "to": to_date.isoformat() + "Z",
-            "description": "last 7 days (default)",
+            "description": f"last {days} days",
         }
 
     def list_all_sites(self) -> List[Dict]:

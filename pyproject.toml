@@ -5,6 +5,7 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.14"
 dependencies = [
+    "ollama>=0.6.1",
     "pika>=1.3.2",
     "python-dotenv>=1.2.2",
     "requests>=2.33.1",

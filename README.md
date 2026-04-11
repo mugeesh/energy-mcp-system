@@ -15,7 +15,6 @@ testing sitename == E2E Validation-flagged-breakers
 📚 Next Steps
 Once this works, you can:
 
-Replace mock data with your real API call
 
 Add PostgreSQL instead of JSON file
 

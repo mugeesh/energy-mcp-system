@@ -1,8 +1,4 @@
 #!/usr/bin/env python3
-"""
-Clean MCP Client with High-Level RPC - FIXED
-"""
-
 import json
 import logging
 import os
@@ -11,6 +7,7 @@ import time
 import uuid
 from datetime import datetime
 
+# Path adjustment for RabbitMqClient
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from rabbitmq.rabbitMqClient import RabbitMqClient
 
@@ -19,142 +16,103 @@ logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
 )
 
-
 class EnergyMCPClient:
     def __init__(self):
         self.rabbitmq = RabbitMqClient()
         self.request_queue = os.getenv("RABBITMQ_QUEUE", "energy_request_queue")
-        self.responses = {}  # correlation_id -> response
-        self.callback_queue = "amq.rabbitmq.reply-to"
-
+        self.responses = {}
+        self.callback_queue = "amq.rabbitmq.reply-to"  # Using Direct Reply-To
         self.setup_rabbitmq()
 
     def setup_rabbitmq(self):
-        """Initialize connection and start listening for replies"""
         self.rabbitmq.connect()
-
         self.rabbitmq.channel.basic_consume(
             queue=self.callback_queue,
             on_message_callback=self.on_response,
             auto_ack=True,
         )
-        logger.info("MCP Client ready - using Direct Reply-To")
+        logger.info("MCP Client connected via Direct Reply-To")
 
-    # ==================== FIXED CALLBACK ====================
     def on_response(self, ch, method, props, body):
-        """Handle incoming response from server - CORRECT SIGNATURE"""
-        correlation_id = props.correlation_id if props else None
-
-        if correlation_id and correlation_id in self.responses:
+        correlation_id = props.correlation_id
+        if correlation_id in self.responses:
             try:
                 self.responses[correlation_id] = json.loads(body)
-                logger.debug(f"Response received for {correlation_id[:8]}...")
             except Exception as e:
-                logger.warning(f"Failed to parse response: {e}")
-                self.responses[correlation_id] = {"error": "Invalid response format"}
-        else:
-            logger.warning(
-                f"Received response with unknown correlation_id: {correlation_id}"
-            )
+                logger.error(f"Failed to parse JSON: {e}")
+                self.responses[correlation_id] = {"error": "Invalid JSON response"}
 
-    # =========================================================
+    def call(self, query: str, timeout: int = 30) -> dict:
+        if not query.strip():
+            return {"error": "Empty query"}
 
-    def call(self, query: str, timeout: int = 300) -> dict:
-        """
-        High-level RPC method
-        """
-        if not query or not str(query).strip():
-            return {"error": "Site name is required"}
+        corr_id = str(uuid.uuid4())
+        self.responses[corr_id] = None
 
-        correlation_id = str(uuid.uuid4())
-        self.responses[correlation_id] = None
-
-        request = {
-            "query": str(query).strip(),
-            "request_time": datetime.now().isoformat(),
-        }
+        payload = {"query": query, "timestamp": datetime.now().isoformat()}
 
         try:
             self.rabbitmq.publish(
                 queue=self.request_queue,
-                body=request,  # dict is handled inside publish()
-                correlation_id=correlation_id,
+                body=payload,
+                correlation_id=corr_id,
                 reply_to=self.callback_queue,
             )
 
-            logger.info(f"RPC call sent for site: '{query}'")
+            logger.info(f"Request sent with correlation_id: {corr_id}")
 
-            # Wait for response
-            start_time = time.time()
-            while self.responses[correlation_id] is None:
+            end_time = time.time() + timeout
+            while self.responses[corr_id] is None:
                 self.rabbitmq.connection.process_data_events(time_limit=0.1)
-
-                if time.time() - start_time > timeout:
-                    logger.error(f"RPC timeout for '{query}' after {timeout}s")
-                    self.responses.pop(correlation_id, None)
-                    return {"error": f"Timeout after {timeout} seconds"}
-
+                if time.time() > end_time:
+                    self.responses.pop(corr_id, None)
+                    return {"error": "Server timed out waiting for response"}
                 time.sleep(0.05)
 
-            response = self.responses.pop(correlation_id)
-            return response
-
+            return self.responses.pop(corr_id)
         except Exception as e:
-            logger.exception(f"RPC call failed for '{site_name}'")
-            self.responses.pop(correlation_id, None)
-            return {"error": f"RPC failed: {str(e)}"}
+            return {"error": f"Connection error: {str(e)}"}
 
     def close(self):
         self.rabbitmq.close()
-        logger.info("MCP Client closed")
-
-
-# ====================== CLI ======================
 
 
 def interactive_mode():
     client = EnergyMCPClient()
-    print("\n" + "=" * 60)
-    print("🌍 Energy MCP Client - High-Level RPC")
-    print("=" * 60)
+    print("\n" + "═" * 60)
+    print("⚡ ENERGY MCP INTERACTIVE CLI")
+    print("═" * 60)
 
     try:
         while True:
-            query = input("\n🔍 Enter site name (or 'quit'): ").strip()
+            query = input("\n🔍 Query (e.g. 'E2E Validation' or 'quit'): ").strip()
             if query.lower() in ["quit", "exit", "q"]:
                 break
             if not query:
                 continue
 
-            print(f"📡 Sending request for '{query}'...")
-            result = client.call(query)
+            print("⏳ Processing...")
+            res = client.call(query)
 
-            print("\n" + "-" * 50)
-            if "error" in result:
-                print(f"❌ Error: {result['error']}")
-                if "available_sites" in result:
-                    print(f"Available: {', '.join(result.get('available_sites', []))}")
+            print("\n" + "─" * 60)
+            if "error" in res:
+                # Handle the case where site is not found or validation fails
+                print(f"❌ ERROR: {res['error']}")
             else:
-                cons = result.get("consumption", {})
-                print(f"✅ Site       : {result.get('site_name')}")
-                print(f"📌 Site ID    : {result.get('site_id')}")
-                print(f"⚡ Consumption: {cons.get('consumption')} {cons.get('unit')}")
-                print(f"📅 Date       : {cons.get('date')}")
-            print("-" * 50)
+                energy_data = res.get("data", {})
+
+                print(f"🏢 Site Title:  {res.get('site_title', 'N/A')}")
+                print(f"🆔 Site ID:     {res.get('site_id', 'N/A')}")
+                print(f"📅 Period:      {res.get('period', 'N/A')}")
+                print(f"⚡ Consumption: {energy_data.get('energy', '0.0')} {energy_data.get('unit', 'kWh')}")
+
+            print("─" * 60)
 
     except KeyboardInterrupt:
-        print("\n👋 Goodbye!")
+        print("\nExiting...")
     finally:
         client.close()
 
 
 if __name__ == "__main__":
-    if len(sys.argv) > 1:
-        client = EnergyMCPClient()
-        try:
-            resp = client.call(sys.argv[1])
-            print(json.dumps(resp, indent=2))
-        finally:
-            client.close()
-    else:
-        interactive_mode()
+    interactive_mode()
