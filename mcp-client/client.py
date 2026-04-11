@@ -3,6 +3,7 @@ import json
 import logging
 import os
 import sys
+import threading
 import time
 import uuid
 from datetime import datetime
@@ -15,6 +16,7 @@ logger = logging.getLogger(__name__)
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
 )
+
 
 class EnergyMCPClient:
     def __init__(self):
@@ -34,20 +36,25 @@ class EnergyMCPClient:
         logger.info("MCP Client connected via Direct Reply-To")
 
     def on_response(self, ch, method, props, body):
-        correlation_id = props.correlation_id
-        if correlation_id in self.responses:
+        corr_id = props.correlation_id
+        if corr_id in self.responses:
             try:
-                self.responses[correlation_id] = json.loads(body)
+                # Store the data and signal the event
+                self.responses[corr_id]["data"] = json.loads(body)
+                self.responses[corr_id]["event"].set()
             except Exception as e:
                 logger.error(f"Failed to parse JSON: {e}")
-                self.responses[correlation_id] = {"error": "Invalid JSON response"}
+                self.responses[corr_id]["data"] = {"error": "Invalid JSON response"}
+                self.responses[corr_id]["event"].set()
 
     def call(self, query: str, timeout: int = 30) -> dict:
         if not query.strip():
             return {"error": "Empty query"}
 
         corr_id = str(uuid.uuid4())
-        self.responses[corr_id] = None
+        # Create a thread-safe event for this specific request
+        event = threading.Event()
+        self.responses[corr_id] = {"event": event, "data": None}
 
         payload = {"query": query, "timestamp": datetime.now().isoformat()}
 
@@ -58,19 +65,27 @@ class EnergyMCPClient:
                 correlation_id=corr_id,
                 reply_to=self.callback_queue,
             )
-
             logger.info(f"Request sent with correlation_id: {corr_id}")
 
-            end_time = time.time() + timeout
-            while self.responses[corr_id] is None:
+            # Wait for the event to be set or the timeout to expire
+            start_time = time.time()
+            while not event.is_set():
+                # Crucial: Allow pika to process incoming network packets
                 self.rabbitmq.connection.process_data_events(time_limit=0.1)
-                if time.time() > end_time:
+
+                if (time.time() - start_time) > timeout:
                     self.responses.pop(corr_id, None)
                     return {"error": "Server timed out waiting for response"}
-                time.sleep(0.05)
 
-            return self.responses.pop(corr_id)
+                # Small sleep to prevent 100% CPU usage while waiting
+                time.sleep(0.01)
+
+            # Retrieve the data populated by on_response
+            response_entry = self.responses.pop(corr_id)
+            return response_entry["data"]
+
         except Exception as e:
+            self.responses.pop(corr_id, None)
             return {"error": f"Connection error: {str(e)}"}
 
     def close(self):

@@ -9,11 +9,12 @@ import sys
 from datetime import datetime, timedelta
 from typing import Any, Dict, List, Optional
 
+# Add parent directory to path so clients module can be found
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+# Now import from clients
 from clients.iam_client import IAMClient
 from clients.ts_api import TSApi
-
-# Add parent directory to path for config import
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -129,7 +130,7 @@ class SiteLookUp:
 
         try:
             days = int(day_input)
-        except ValueError, TypeError:
+        except ValueError as TypeError:
             days = 7
 
         if days <= 0:

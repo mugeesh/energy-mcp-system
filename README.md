@@ -7,9 +7,10 @@ setup steps
 5. uv add pika requests 
 6. uv add pika python-dotenv
 
-
-
-testing sitename == E2E Validation-flagged-breakers
+### run on local PC
+1. uv run mcp-client/client.py
+2. uv run python -m mcp-server.server
+3. uv run ollama_api.py
 
 
 📚 Next Steps
