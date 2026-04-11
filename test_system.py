@@ -1,74 +1,131 @@
-#!/usr/bin/env python3
-"""
-Test the complete system
-"""
-
+import asyncio
 import json
 import subprocess
-import sys
-import time
 
-import requests
+async def test_mcp_server():
+    # Start the server process
+    process = await asyncio.create_subprocess_exec(
+        "/usr/local/bin/uv",
+        "--directory", "/Users/mugeesh/git2/POC/MCP/energy-mcp-system/mcp-server",
+        "run", "server.py",
+        stdin=subprocess.PIPE,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE
+    )
 
+    # Initialize connection first (required by MCP)
+    init_request = {
+        "jsonrpc": "2.0",
+        "id": 1,
+        "method": "initialize",
+        "params": {
+            "protocolVersion": "0.1.0",
+            "capabilities": {}
+        }
+    }
 
-def check_rabbitmq():
-    """Check if RabbitMQ is running"""
-    try:
-        response = requests.get("http://localhost:15672", timeout=2)
-        return True
-    except:
-        return False
+    print("Sending initialize request...")
+    process.stdin.write((json.dumps(init_request) + "\n").encode())
+    await process.stdin.drain()
 
+    # Read initialize response
+    response_line = await process.stdout.readline()
+    print("Initialize response:", response_line.decode())
 
-def main():
-    print("=" * 60)
-    print("🧪 Testing Energy MCP System")
-    print("=" * 60)
+    # Send initialized notification
+    initialized_notification = {
+        "jsonrpc": "2.0",
+        "method": "notifications/initialized"
+    }
 
-    # Check RabbitMQ
-    print("\n1. Checking RabbitMQ...")
-    if not check_rabbitmq():
-        print("❌ RabbitMQ is not running!")
-        print("   Please run: docker start rabbitmq-energy")
-        return False
+    process.stdin.write((json.dumps(initialized_notification) + "\n").encode())
+    await process.stdin.drain()
 
-    print("✅ RabbitMQ is running")
+    # Now list tools
+    tools_request = {
+        "jsonrpc": "2.0",
+        "id": 2,
+        "method": "tools/list",
+        "params": {}
+    }
 
-    # Test site mapping
-    print("\n2. Testing site mapping...")
-    test_sites = ["Hong Kong", "Singapore", "London", "Invalid Site"]
+    print("\nSending tools/list request...")
+    process.stdin.write((json.dumps(tools_request) + "\n").encode())
+    await process.stdin.drain()
 
-    print("\n3. Running queries...")
-    for site in test_sites:
-        print(f"\n   Query: {site}")
+    # Read tools response
+    response_line = await process.stdout.readline()
+    print("Tools response:", response_line.decode())
 
-        # Run client with single query
-        result = subprocess.run(
-            [sys.executable, "mcp-client/client.py", site],
-            capture_output=True,
-            text=True,
-            timeout=10000,
-        )
+    # Call list_all_sites tool
+    tool_call = {
+        "jsonrpc": "2.0",
+        "id": 3,
+        "method": "tools/call",
+        "params": {
+            "name": "list_all_sites",
+            "arguments": {}
+        }
+    }
 
-        if result.returncode == 0:
-            try:
-                response = json.loads(result.stdout)
-                if "error" in response:
-                    print(f"   ❌ Error: {response['error']}")
-                else:
-                    print(
-                        f"   ✅ Found: {response['site_id']} - {response['consumption']['consumption']} {response['consumption']['unit']}"
-                    )
-            except:
-                print(f"   Output: {result.stdout[:100]}")
+    print("\nSending list_all_sites call...")
+    process.stdin.write((json.dumps(tool_call) + "\n").encode())
+    await process.stdin.drain()
+
+    # Read tool response (might need multiple reads)
+    for _ in range(3):  # Read up to 3 responses
+        response_line = await process.stdout.readline()
+        if response_line:
+            print("Tool result:", response_line.decode())
         else:
-            print(f"   ❌ Failed: {result.stderr[:100]}")
+            break
 
-    print("\n" + "=" * 60)
-    print("✅ Test complete!")
-    print("=" * 60)
-    return True
+    # Try get_energy_consumption
+    energy_call = {
+        "jsonrpc": "2.0",
+        "id": 4,
+        "method": "tools/call",
+        "params": {
+            "name": "get_energy_consumption",
+            "arguments": {
+                "site_name": "Daniel Hub",
+                "days": 7
+            }
+        }
+    }
 
+    print("\nSending get_energy_consumption call...")
+    process.stdin.write((json.dumps(energy_call) + "\n").encode())
+    await process.stdin.drain()
+
+    # Read response
+    response_line = await process.stdout.readline()
+    print("Energy result:", response_line.decode())
+
+    # Give it a moment to process and output all responses
+    await asyncio.sleep(1)
+
+    # Read any remaining output
+    remaining = []
+    while True:
+        try:
+            line = await asyncio.wait_for(process.stdout.readline(), timeout=0.5)
+            if line:
+                remaining.append(line.decode())
+            else:
+                break
+        except asyncio.TimeoutError:
+            break
+
+    if remaining:
+        print("\nAdditional output:")
+        for line in remaining:
+            print(line)
+
+    # Clean up
+    process.terminate()
+    await process.wait()
+    print("\nTest completed")
 
 if __name__ == "__main__":
-    main()
+    asyncio.run(test_mcp_server())
