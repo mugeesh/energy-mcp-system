@@ -60,5 +60,17 @@ class IAMClient:
         except Exception as e:
             logging.error("Error fetching access token: " + str(e))
 
+    def get_all_users(self):
+        try:
+            iam_response = requests.get(
+                f"{self.base_url}/users",
+                headers=self.get_headers(),
+                timeout=30,
+            )
+            iam_response.raise_for_status()
+            return iam_response
+        except Exception as e:
+            logging.error("Error fetching access token: " + str(e))
+
     def get_headers(self):
         return {"Content-Type": "application/json", "authorization": self.token}

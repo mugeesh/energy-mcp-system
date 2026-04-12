@@ -1,7 +1,7 @@
 [project]
 name = "energy-mcp-system"
 version = "0.1.0"
-description = "Add your description here"
+description = "MCP server client to get info about site and energy consumption"
 readme = "README.md"
 requires-python = ">=3.14"
 dependencies = [

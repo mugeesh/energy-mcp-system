@@ -1,133 +1,248 @@
 #!/usr/bin/env python3
+"""
+Clean Energy MCP Agent with Ollama (Best Practice 2026)
+
+- Proper async resource management
+- Full conversation history
+- Robust tool calling loop
+- Clean separation between MCP client and Ollama agent logic
+"""
+
+import asyncio
 import json
 import logging
 import os
-import sys
-import threading
-import time
-import uuid
-from datetime import datetime
+from contextlib import AsyncExitStack
+from typing import Any, Dict, List, Optional
 
-# Path adjustment for RabbitMqClient
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from rabbitmq.rabbitMqClient import RabbitMqClient
+import ollama
+from mcp import ClientSession, StdioServerParameters
+from mcp.client.stdio import stdio_client
+from mcp.types import CallToolResult
 
-logger = logging.getLogger(__name__)
-logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
+# ========================= CONFIG =========================
+MCP_SERVER_PATH = os.getenv(
+    "MCP_SERVER_PATH",
+    "/Users/mugeesh/git2/POC/MCP/energy-mcp-system/mcp-server"
 )
+OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "qwen3:1.7b")
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+)
+logger = logging.getLogger("EnergyMCPAgent")
 
 
-class EnergyMCPClient:
+class EnergyMCPAgent:
+    """Clean MCP + Ollama Agent following best practices."""
+
     def __init__(self):
-        self.rabbitmq = RabbitMqClient()
-        self.request_queue = os.getenv("RABBITMQ_QUEUE", "energy_request_queue")
-        self.responses = {}
-        self.callback_queue = "amq.rabbitmq.reply-to"  # Using Direct Reply-To
-        self.setup_rabbitmq()
+        self.session: Optional[ClientSession] = None
+        self.exit_stack = AsyncExitStack()
+        self.ollama_tools: List[Dict] = []
+        self.messages: List[Dict] = []
+        self._connected = False
 
-    def setup_rabbitmq(self):
-        self.rabbitmq.connect()
-        self.rabbitmq.channel.basic_consume(
-            queue=self.callback_queue,
-            on_message_callback=self.on_response,
-            auto_ack=True,
+
+    async def __aenter__(self):
+        await self.connect()
+        return self
+
+    async def __aexit__(self, exc_type, exc_val, exc_tb):
+        await self.close()
+
+    async def connect(self) -> None:
+        """Connect to MCP server and load tools."""
+        if self._connected:
+            return
+
+        logger.info("🔌 Connecting to MCP Server...")
+
+        server_params = StdioServerParameters(
+            command="uv",
+            args=["--directory", MCP_SERVER_PATH, "run", "server.py"],
+            env=None,
         )
-        logger.info("MCP Client connected via Direct Reply-To")
 
-    def on_response(self, ch, method, props, body):
-        corr_id = props.correlation_id
-        if corr_id in self.responses:
-            try:
-                # Store the data and signal the event
-                self.responses[corr_id]["data"] = json.loads(body)
-                self.responses[corr_id]["event"].set()
-            except Exception as e:
-                logger.error(f"Failed to parse JSON: {e}")
-                self.responses[corr_id]["data"] = {"error": "Invalid JSON response"}
-                self.responses[corr_id]["event"].set()
+        # Proper async context management
+        stdio_transport = await self.exit_stack.enter_async_context(
+            stdio_client(server_params)
+        )
+        read, write = stdio_transport
 
-    def call(self, query: str, timeout: int = 30) -> dict:
-        if not query.strip():
-            return {"error": "Empty query"}
+        self.session = await self.exit_stack.enter_async_context(
+            ClientSession(read, write)
+        )
 
-        corr_id = str(uuid.uuid4())
-        # Create a thread-safe event for this specific request
-        event = threading.Event()
-        self.responses[corr_id] = {"event": event, "data": None}
+        await self.session.initialize()
 
-        payload = {"query": query, "timestamp": datetime.now().isoformat()}
+        # Load tools once
+        tools_response = await self.session.list_tools()
+        self.ollama_tools = [
+            self._mcp_tool_to_ollama(t) for t in tools_response.tools
+        ]
+        # Initialize conversation with system prompt
+        self.messages = [
+            {
+                "role": "system",
+                "content": (
+                    "You are a helpful energy data assistant. or site information or User information "
+                    "Use the available tools to answer questions about sites information or energy consumption or User information. if user asked for consumption or if user asked some users details  "
+                    "Be concise, accurate, and professional. "
+                    "If you need information, call the appropriate tool."
+                )
+            }
+        ]
+
+        self._connected = True
+        logger.info(f"✅ Connected. Loaded {len(self.ollama_tools)} MCP tools.")
+
+
+    def _mcp_tool_to_ollama(self, mcp_tool) -> Dict:
+        """Convert MCP Tool object → Ollama tool schema (critical fix)"""
+        return {
+            "type": "function",
+            "function": {
+                "name": mcp_tool.name,
+                "description": mcp_tool.description or f"Execute the {mcp_tool.name} tool",
+                "parameters": mcp_tool.inputSchema or {
+                    "type": "object",
+                    "properties": {},
+                    "required": []
+                }
+            }
+        }
+
+    async def _call_tool(self, tool_name: str, arguments: Dict[str, Any]) -> Any:
+        """Execute MCP tool and return clean result."""
+        if not self.session:
+            await self.connect()
 
         try:
-            self.rabbitmq.publish(
-                queue=self.request_queue,
-                body=payload,
-                correlation_id=corr_id,
-                reply_to=self.callback_queue,
+            result: CallToolResult = await self.session.call_tool(
+                name=tool_name,
+                arguments=arguments
             )
-            logger.info(f"Request sent with correlation_id: {corr_id}")
 
-            # Wait for the event to be set or the timeout to expire
-            start_time = time.time()
-            while not event.is_set():
-                # Crucial: Allow pika to process incoming network packets
-                self.rabbitmq.connection.process_data_events(time_limit=0.1)
+            # Best practice result parsing
+            if result.structuredContent:
+                return result.structuredContent.get("result") or result.structuredContent
 
-                if (time.time() - start_time) > timeout:
-                    self.responses.pop(corr_id, None)
-                    return {"error": "Server timed out waiting for response"}
-
-                # Small sleep to prevent 100% CPU usage while waiting
-                time.sleep(0.01)
-
-            # Retrieve the data populated by on_response
-            response_entry = self.responses.pop(corr_id)
-            return response_entry["data"]
+            if result.content:
+                texts = [b.text.strip() for b in result.content if hasattr(b, "text") and b.text]
+                if len(texts) == 1:
+                    try:
+                        return json.loads(texts[0])
+                    except (json.JSONDecodeError, TypeError):
+                        return texts[0]
+                # Multiple items
+                return [
+                    json.loads(t) if t.startswith("{") else t
+                    for t in texts
+                ]
+            return None
 
         except Exception as e:
-            self.responses.pop(corr_id, None)
-            return {"error": f"Connection error: {str(e)}"}
+            logger.error(f"Tool call failed [{tool_name}]: {e}")
+            return {"error": str(e)}
 
-    def close(self):
-        self.rabbitmq.close()
+    async def chat(self, user_query: str) -> str:
+        """Single turn chat with tool calling support."""
+        if not self._connected:
+            await self.connect()
+
+        # Add user message
+        self.messages.append({"role": "user", "content": user_query})
+
+        max_steps = 8
+        for step in range(max_steps):
+            logger.info("\n Thinking (step {step + 1})...")
+            logger.info(f"all messages : {self.messages}")
+
+            response = ollama.chat(
+                model=OLLAMA_MODEL,
+                messages=self.messages,
+                tools=self.ollama_tools
+            )
+            message = response["message"]
+
+            logger.info(f"current message : {message}")
+            # Save assistant response
+            self.messages.append(message)
+
+            # No tool calls → final answer
+            if not message.get("tool_calls"):
+                print("\n" + "═" * 70)
+                print("✅ Answer:")
+                print(message["content"])
+                print("═" * 70)
+                return message["content"]
+
+            # Handle tool calls
+            for tool_call in message.get("tool_calls", []):
+                tool_name = tool_call["function"]["name"]
+                logger.info(f"Calling tool_name: {tool_name}")
+                try:
+                    arguments = tool_call["function"]["arguments"]
+                    logger.info(f"Calling arguments: {arguments}")
+                    if isinstance(arguments, str):
+                        arguments = json.loads(arguments)
+                except:
+                    arguments = {}
+
+                logger.info(f"   → Using tool: {tool_name}({arguments})")
+                logger.info("\n ======================")
+                tool_result = await self._call_tool(tool_name, arguments)
+
+                # Add tool response back to conversation
+                self.messages.append({
+                    "role": "tool",
+                    "content": json.dumps(tool_result, ensure_ascii=False),
+                    "tool_call_id": tool_call.get("id")
+                })
+
+        logger.error(f"⚠️  Reached maximum reasoning steps.")
+        return "Sorry, I couldn't complete the request."
+
+    async def close(self) -> None:
+        """Clean shutdown."""
+        if self.exit_stack:
+            await self.exit_stack.aclose()
+        self._connected = False
+        logger.info("👋 Energy MCP Agent shutdown.")
 
 
-def interactive_mode():
-    client = EnergyMCPClient()
-    print("\n" + "═" * 60)
-    print("⚡ ENERGY MCP INTERACTIVE CLI")
-    print("═" * 60)
+# ====================== Interactive Mode ======================
+async def main():
+    async with EnergyMCPAgent() as agent:
+        print("\n" + "═" * 80)
+        print("⚡ ENERGY AI AGENT  →  Ollama + MCP (Clean Best Practice)")
+        print("═" * 80)
+        print("Examples:")
+        print("   • What is the energy consumption of Mugeesh Site last 10 days?")
+        print("   • Show energy for E2E Validation-flagged-breakers")
+        print("   • can you give energy consumption for the Validation-flagged-breakers site last 8 days")
+        print("   • List all sites")
+        print("   • === OR ====")
+        print("   • List all User")
+        print("who is mugeesh husain")
+        print("Type 'quit' to exit.\n")
 
-    try:
         while True:
-            query = input("\n🔍 Query (e.g. 'E2E Validation' or 'quit'): ").strip()
-            if query.lower() in ["quit", "exit", "q"]:
+            try:
+                query = input("You: ").strip()
+                if query.lower() in ["quit", "exit", "bye", "q"]:
+                    break
+                if query:
+                    await agent.chat(query)
+            except KeyboardInterrupt:
                 break
-            if not query:
-                continue
+            except Exception as e:
+                logger.error(f"Error: {e}")
 
-            print("⏳ Processing...")
-            res = client.call(query)
-
-            print("\n" + "─" * 60)
-            if "error" in res:
-                # Handle the case where site is not found or validation fails
-                print(f"❌ ERROR: {res['error']}")
-            else:
-                energy_data = res.get("data", {})
-
-                print(f"🏢 Site Title:  {res.get('site_title', 'N/A')}")
-                print(f"🆔 Site ID:     {res.get('site_id', 'N/A')}")
-                print(f"📅 Period:      {res.get('period', 'N/A')}")
-                print(f"⚡ Consumption: {energy_data.get('energy', '0.0')} {energy_data.get('unit', 'kWh')}")
-
-            print("─" * 60)
-
-    except KeyboardInterrupt:
-        print("\nExiting...")
-    finally:
-        client.close()
+    print("\nGoodbye!")
 
 
 if __name__ == "__main__":
-    interactive_mode()
+    asyncio.run(main())
