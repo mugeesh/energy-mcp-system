@@ -73,3 +73,21 @@ tail -f mcpServer.mcp.config.usrlocal.energy-mcp.log
 ```
 # check logs
 ```/Users/mugeesh/Library/Application Support/Cursor/logs/20260411T113943/window3/exthost/anysphere.cursor-mcp```
+
+
+### set ENV
+```
+RABBITMQ_HOST=localhost
+RABBITMQ_PORT=5672
+RABBITMQ_USER=admin
+RABBITMQ_PASS=password123
+TIKA_SERVER_URL=http://localhost:9998
+MY_API_KEY=sk-abc123xyz
+# IAM
+iam_username=
+iam_password=
+iam_url=
+# ts api
+ts_api_url=
+
+```

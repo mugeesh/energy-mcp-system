@@ -5,18 +5,7 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="62323343-547c-4947-8189-abb9c1bbce96" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/aibot/ollama_api.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/mcp-server/health_check.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/mcp-server/user_lookup.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/clients/iam_client.py" beforeDir="false" afterPath="$PROJECT_DIR$/clients/iam_client.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/mcp-client/__init__.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/mcp-client/client.py" beforeDir="false" afterPath="$PROJECT_DIR$/mcp-client/client.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/mcp-server/server.py" beforeDir="false" afterPath="$PROJECT_DIR$/mcp-server/server.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ollama/__init__.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/ollama/ollama_api.py" beforeDir="false" afterPath="$PROJECT_DIR$/ollama/ollama_api.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pyproject.toml" beforeDir="false" afterPath="$PROJECT_DIR$/pyproject.toml" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -76,7 +65,7 @@
       <recent name="$PROJECT_DIR$/iam" />
     </key>
   </component>
-  <component name="RunManager" selected="Python.server">
+  <component name="RunManager" selected="Python.client">
     <configuration name="client" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
       <module name="energy-mcp-system" />
       <option name="ENV_FILES" value="" />
@@ -201,8 +190,8 @@
     </list>
     <recent_temporary>
       <list>
-        <item itemvalue="Python.server" />
         <item itemvalue="Python.client" />
+        <item itemvalue="Python.server" />
         <item itemvalue="Python.user_lookup" />
         <item itemvalue="Python.ollama_api" />
         <item itemvalue="Python.health_check" />
@@ -225,7 +214,7 @@
       <option name="presentableId" value="Default" />
       <updated>1775793394891</updated>
       <workItem from="1775793396935" duration="12299000" />
-      <workItem from="1775917761632" duration="7890000" />
+      <workItem from="1775917761632" duration="8938000" />
     </task>
     <servers />
   </component>
@@ -262,32 +251,32 @@
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/mcp-client/client.py</url>
-          <line>191</line>
+          <line>193</line>
           <option name="timeStamp" value="115" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/mcp-client/client.py</url>
-          <line>204</line>
+          <line>206</line>
           <option name="timeStamp" value="120" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/mcp-client/client.py</url>
-          <line>171</line>
+          <line>173</line>
           <option name="timeStamp" value="123" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/mcp-client/client.py</url>
-          <line>169</line>
+          <line>171</line>
           <option name="timeStamp" value="127" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/mcp-client/client.py</url>
-          <line>198</line>
+          <line>200</line>
           <option name="timeStamp" value="128" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/mcp-client/client.py</url>
-          <line>128</line>
+          <line>129</line>
           <option name="timeStamp" value="130" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
@@ -299,6 +288,11 @@
           <url>file://$PROJECT_DIR$/mcp-server/user_lookup.py</url>
           <line>68</line>
           <option name="timeStamp" value="137" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/mcp-client/client.py</url>
+          <line>157</line>
+          <option name="timeStamp" value="140" />
         </line-breakpoint>
       </breakpoints>
       <default-breakpoints>
@@ -318,10 +312,10 @@
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
     <SUITE FILE_PATH="coverage/energy_mcp_system$health_check.coverage" NAME="health_check Coverage Results" MODIFIED="1775909755172" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/mcp-server" />
-    <SUITE FILE_PATH="coverage/energy_mcp_system$client.coverage" NAME="client Coverage Results" MODIFIED="1775967594892" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/mcp-client" />
+    <SUITE FILE_PATH="coverage/energy_mcp_system$client.coverage" NAME="client Coverage Results" MODIFIED="1775968362960" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/mcp-client" />
     <SUITE FILE_PATH="coverage/energy_mcp_system$rabbitMqService.coverage" NAME="rabbitMqService Coverage Results" MODIFIED="1775793940369" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/rabbit-mq" />
     <SUITE FILE_PATH="coverage/energy_mcp_system$test_system.coverage" NAME="test_system Coverage Results" MODIFIED="1775894980359" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
-    <SUITE FILE_PATH="coverage/energy_mcp_system$server.coverage" NAME="server Coverage Results" MODIFIED="1775967613358" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/mcp-server" />
+    <SUITE FILE_PATH="coverage/energy_mcp_system$server.coverage" NAME="server Coverage Results" MODIFIED="1775967644369" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/mcp-server" />
     <SUITE FILE_PATH="coverage/energy_mcp_system$ollama_api.coverage" NAME="ollama_api Coverage Results" MODIFIED="1775917926756" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/ollama" />
     <SUITE FILE_PATH="coverage/energy_mcp_system$user_lookup.coverage" NAME="user_lookup Coverage Results" MODIFIED="1775967069180" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/mcp-server" />
   </component>

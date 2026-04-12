@@ -1,34 +1,12 @@
-def load_users(self, force_refresh=False):
-        """Load all users from Energybox API"""
-        if self.users_cache and not force_refresh:
-            return self.users_cache
-
-        try:
-            logger.info("Fetching users from Energybox API...")
-            response = self.iam_client.get_all_users()
-            self.users_cache = response.json()
-            # Build lookup dictionary
-            self.users_cache = {}
-            for user in self.users_cache:
-                user_id = str(user["id"])
-                full_user_name = user["firstname"].lower() + " " + user['lastname']
-
-                # Add title mapping
-                self.users_cache[full_user_name] = user_id
-
-                # Add partial matches for common variations
-                words = full_user_name.split()
-                for word in words:
-                    if len(word) > 3:  # Only meaningful words
-                        self.user_lookup[word] = user_id
-
-                # Add ID mapping directly
-                self.user_lookup[user_id] = user_id
-
-            self.last_fetch = datetime.now()
-            logger.info(f"Loaded {len(self.users_cache)} users")
-            return self.users_cache
-
-        except Exception as e:
-            logger.error(f"Failed to load users: {e}")
-            raise
+RABBITMQ_HOST=localhost
+RABBITMQ_PORT=5672
+RABBITMQ_USER=admin
+RABBITMQ_PASS=password123
+TIKA_SERVER_URL=http://localhost:9998
+MY_API_KEY=sk-abc123xyz
+# IAM
+iam_username=mugeesh.husain@energybox.com
+iam_password=Jamia1007&staging
+iam_url=https://iam.staging.energybox.com/api/v1
+# ts api
+ts_api_url=https://ts.staging.energybox.com

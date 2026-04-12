@@ -43,6 +43,7 @@ class EnergyMCPAgent:
         self.ollama_tools: List[Dict] = []
         self.messages: List[Dict] = []
         self._connected = False
+        self.max_history = int(os.getenv("MCP_MAX_HISTORY", 12))
 
 
     async def __aenter__(self):
@@ -152,6 +153,7 @@ class EnergyMCPAgent:
         if not self._connected:
             await self.connect()
 
+        self._trim_history()
         # Add user message
         self.messages.append({"role": "user", "content": user_query})
 
@@ -212,6 +214,15 @@ class EnergyMCPAgent:
         self._connected = False
         logger.info("👋 Energy MCP Agent shutdown.")
 
+    def _trim_history(self):
+        """Keep only recent messages + system prompt"""
+        if len(self.messages) <= self.max_history:
+            return
+        # Always keep system prompt (index 0)
+        system_prompt = self.messages[0]
+        # Keep last (max_history - 1) messages
+        self.messages = [system_prompt] + self.messages[-(self.max_history - 1):]
+        logger.debug(f"History trimmed to {len(self.messages)} messages")
 
 # ====================== Interactive Mode ======================
 async def main():
