@@ -5,27 +5,10 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="672d8df9-2a2a-4022-b01a-415c4ead4651" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/.evn" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/energy-mcp-ui/app/api/chat/route.ts" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/energy-mcp-ui/app/api/clearHistory/route.ts" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/energy-mcp-ui/app/api/tools/route.ts" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/energy-mcp-ui/components/ChatMessage.tsx" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/energy-mcp-ui/components/ui/ChatInput.tsx" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/energy-mcp-ui/components/ui/ToolCall.tsx" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/energy-mcp-ui/components/ui/avatar.tsx" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/energy-mcp-ui/components/ui/badge.tsx" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/energy-mcp-ui/components/ui/card.tsx" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/energy-mcp-ui/components/ui/input.tsx" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/energy-mcp-ui/components/ui/scroll-area.tsx" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/energy-mcp-ui/components/ui/separator.tsx" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/energy-mcp-ui/components/ui/textarea.tsx" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/energy-mcp-ui/lib/types.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/energy-mcp-ui" beforeDir="false" afterPath="$PROJECT_DIR$/energy-mcp-ui" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/energy-mcp-ui/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/energy-mcp-ui/.gitignore" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/energy-mcp-ui/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/energy-mcp-ui/README.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/energy-mcp-ui/app/globals.css" beforeDir="false" afterPath="$PROJECT_DIR$/energy-mcp-ui/app/globals.css" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/energy-mcp-ui/app/page.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/energy-mcp-ui/app/page.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/energy-mcp-ui" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/energy-mcp-ui/energy-mcp-ui" beforeDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -146,7 +129,7 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1776004760724</updated>
-      <workItem from="1776004762242" duration="1491000" />
+      <workItem from="1776004762242" duration="1843000" />
     </task>
     <servers />
   </component>
