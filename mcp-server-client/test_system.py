@@ -6,7 +6,7 @@ async def test_mcp_server():
     # Start the server process
     process = await asyncio.create_subprocess_exec(
         "/usr/local/bin/uv",
-        "--directory", "/Users/mugeesh/git2/POC/MCP/energy-mcp-system/mcp-server",
+        "--directory", "/mcp_server",
         "run", "server.py",
         stdin=subprocess.PIPE,
         stdout=subprocess.PIPE,

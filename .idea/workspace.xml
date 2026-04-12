@@ -4,8 +4,28 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="62323343-547c-4947-8189-abb9c1bbce96" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
+    <list default="true" id="672d8df9-2a2a-4022-b01a-415c4ead4651" name="Changes" comment="">
+      <change afterPath="$PROJECT_DIR$/.evn" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/energy-mcp-ui/app/api/chat/route.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/energy-mcp-ui/app/api/clearHistory/route.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/energy-mcp-ui/app/api/tools/route.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/energy-mcp-ui/components/ChatMessage.tsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/energy-mcp-ui/components/ui/ChatInput.tsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/energy-mcp-ui/components/ui/ToolCall.tsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/energy-mcp-ui/components/ui/avatar.tsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/energy-mcp-ui/components/ui/badge.tsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/energy-mcp-ui/components/ui/card.tsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/energy-mcp-ui/components/ui/input.tsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/energy-mcp-ui/components/ui/scroll-area.tsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/energy-mcp-ui/components/ui/separator.tsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/energy-mcp-ui/components/ui/textarea.tsx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/energy-mcp-ui/lib/types.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/energy-mcp-ui" beforeDir="false" afterPath="$PROJECT_DIR$/energy-mcp-ui" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/energy-mcp-ui/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/energy-mcp-ui/.gitignore" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/energy-mcp-ui/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/energy-mcp-ui/README.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/energy-mcp-ui/app/globals.css" beforeDir="false" afterPath="$PROJECT_DIR$/energy-mcp-ui/app/globals.css" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/energy-mcp-ui/app/page.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/energy-mcp-ui/app/page.tsx" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -15,14 +35,11 @@
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
-  <component name="KubernetesApiPersistence"><![CDATA[{}]]></component>
-  <component name="KubernetesApiProvider"><![CDATA[{
-  "isMigrated": true
+  <component name="ProjectColorInfo"><![CDATA[{
+  "customColor": "",
+  "associatedIndex": 2
 }]]></component>
-  <component name="ProjectColorInfo">{
-  &quot;associatedIndex&quot;: 2
-}</component>
-  <component name="ProjectId" id="3C9MaIZre4Gjmhcc2NKD0O3OsD3" />
+  <component name="ProjectId" id="3CGH04mCtnr69jHPlGMaB7NvFyw" />
   <component name="ProjectViewState">
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
@@ -30,39 +47,34 @@
   <component name="PropertiesComponent"><![CDATA[{
   "keyToString": {
     "ModuleVcsDetector.initialDetectionPerformed": "true",
-    "Python.client.executor": "Run",
-    "Python.health_check.executor": "Run",
-    "Python.ollama_api.executor": "Debug",
-    "Python.rabbitMqService.executor": "Debug",
+    "Python.client.executor": "Debug",
     "Python.server.executor": "Run",
-    "Python.test_system.executor": "Run",
-    "Python.user_lookup.executor": "Run",
     "RunOnceActivity.ShowReadmeOnStart": "true",
     "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
-    "RunOnceActivity.git.unshallow": "true",
     "com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1": "true",
     "git-widget-placeholder": "main",
     "junie.onboarding.icon.badge.shown": "true",
     "kotlin-language-version-configured": "true",
-    "last_opened_file_path": "/Users/mugeesh/git2/POC/MCP/energy-mcp-system/mcp-server",
+    "last_opened_file_path": "/Users/mugeesh/git2/POC/MCP/energy-mcp-system",
     "node.js.detected.package.eslint": "true",
     "node.js.detected.package.tslint": "true",
     "node.js.selected.package.eslint": "(autodetect)",
     "node.js.selected.package.tslint": "(autodetect)",
     "nodejs_package_manager_path": "npm",
-    "project.structure.last.edited": "SDKs",
-    "project.structure.proportion": "0.0",
+    "project.structure.last.edited": "Project",
+    "project.structure.proportion": "0.15",
     "project.structure.side.proportion": "0.42408377",
     "to.speed.mode.migration.done": "true",
+    "ts.external.directory.path": "/Users/mugeesh/git2/POC/MCP/energy-mcp-system/energy-mcp-ui/node_modules/typescript/lib",
     "vue.rearranger.settings.migration": "true"
   }
 }]]></component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
-      <recent name="$PROJECT_DIR$/mcp-server" />
       <recent name="$PROJECT_DIR$" />
-      <recent name="$PROJECT_DIR$/ollama" />
-      <recent name="$PROJECT_DIR$/iam" />
+    </key>
+    <key name="MoveFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$" />
     </key>
   </component>
   <component name="RunManager" selected="Python.client">
@@ -75,58 +87,12 @@
         <env name="PYTHONUNBUFFERED" value="1" />
       </envs>
       <option name="SDK_HOME" value="" />
-      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/mcp-client" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/mcp-server-client/mcp_client" />
       <option name="IS_MODULE_SDK" value="true" />
       <option name="ADD_CONTENT_ROOTS" value="true" />
       <option name="ADD_SOURCE_ROOTS" value="true" />
       <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
-      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/mcp-client/client.py" />
-      <option name="PARAMETERS" value="" />
-      <option name="SHOW_COMMAND_LINE" value="false" />
-      <option name="EMULATE_TERMINAL" value="false" />
-      <option name="MODULE_MODE" value="false" />
-      <option name="REDIRECT_INPUT" value="false" />
-      <option name="INPUT_FILE" value="" />
-      <method v="2" />
-    </configuration>
-    <configuration name="health_check" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
-      <module name="energy-mcp-system" />
-      <option name="ENV_FILES" value="" />
-      <option name="INTERPRETER_OPTIONS" value="" />
-      <option name="PARENT_ENVS" value="true" />
-      <envs>
-        <env name="PYTHONUNBUFFERED" value="1" />
-      </envs>
-      <option name="SDK_HOME" value="" />
-      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/mcp-server" />
-      <option name="IS_MODULE_SDK" value="true" />
-      <option name="ADD_CONTENT_ROOTS" value="true" />
-      <option name="ADD_SOURCE_ROOTS" value="true" />
-      <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
-      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/mcp-server/health_check.py" />
-      <option name="PARAMETERS" value="" />
-      <option name="SHOW_COMMAND_LINE" value="false" />
-      <option name="EMULATE_TERMINAL" value="false" />
-      <option name="MODULE_MODE" value="false" />
-      <option name="REDIRECT_INPUT" value="false" />
-      <option name="INPUT_FILE" value="" />
-      <method v="2" />
-    </configuration>
-    <configuration name="ollama_api" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
-      <module name="energy-mcp-system" />
-      <option name="ENV_FILES" value="" />
-      <option name="INTERPRETER_OPTIONS" value="" />
-      <option name="PARENT_ENVS" value="true" />
-      <envs>
-        <env name="PYTHONUNBUFFERED" value="1" />
-      </envs>
-      <option name="SDK_HOME" value="" />
-      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/ollama" />
-      <option name="IS_MODULE_SDK" value="true" />
-      <option name="ADD_CONTENT_ROOTS" value="true" />
-      <option name="ADD_SOURCE_ROOTS" value="true" />
-      <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
-      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/ollama/ollama_api.py" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/mcp-server-client/mcp_client/client.py" />
       <option name="PARAMETERS" value="" />
       <option name="SHOW_COMMAND_LINE" value="false" />
       <option name="EMULATE_TERMINAL" value="false" />
@@ -144,35 +110,12 @@
         <env name="PYTHONUNBUFFERED" value="1" />
       </envs>
       <option name="SDK_HOME" value="" />
-      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/mcp-server" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/mcp-server-client/mcp_server" />
       <option name="IS_MODULE_SDK" value="true" />
       <option name="ADD_CONTENT_ROOTS" value="true" />
       <option name="ADD_SOURCE_ROOTS" value="true" />
       <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
-      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/mcp-server/server.py" />
-      <option name="PARAMETERS" value="list of all sites" />
-      <option name="SHOW_COMMAND_LINE" value="false" />
-      <option name="EMULATE_TERMINAL" value="false" />
-      <option name="MODULE_MODE" value="false" />
-      <option name="REDIRECT_INPUT" value="false" />
-      <option name="INPUT_FILE" value="" />
-      <method v="2" />
-    </configuration>
-    <configuration name="user_lookup" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
-      <module name="energy-mcp-system" />
-      <option name="ENV_FILES" value="" />
-      <option name="INTERPRETER_OPTIONS" value="" />
-      <option name="PARENT_ENVS" value="true" />
-      <envs>
-        <env name="PYTHONUNBUFFERED" value="1" />
-      </envs>
-      <option name="SDK_HOME" value="" />
-      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/mcp-server" />
-      <option name="IS_MODULE_SDK" value="true" />
-      <option name="ADD_CONTENT_ROOTS" value="true" />
-      <option name="ADD_SOURCE_ROOTS" value="true" />
-      <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
-      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/mcp-server/user_lookup.py" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/mcp-server-client/mcp_server/server.py" />
       <option name="PARAMETERS" value="" />
       <option name="SHOW_COMMAND_LINE" value="false" />
       <option name="EMULATE_TERMINAL" value="false" />
@@ -181,20 +124,10 @@
       <option name="INPUT_FILE" value="" />
       <method v="2" />
     </configuration>
-    <list>
-      <item itemvalue="Python.user_lookup" />
-      <item itemvalue="Python.health_check" />
-      <item itemvalue="Python.client" />
-      <item itemvalue="Python.ollama_api" />
-      <item itemvalue="Python.server" />
-    </list>
     <recent_temporary>
       <list>
         <item itemvalue="Python.client" />
         <item itemvalue="Python.server" />
-        <item itemvalue="Python.user_lookup" />
-        <item itemvalue="Python.ollama_api" />
-        <item itemvalue="Python.health_check" />
       </list>
     </recent_temporary>
   </component>
@@ -208,13 +141,12 @@
   </component>
   <component name="TaskManager">
     <task active="true" id="Default" summary="Default task">
-      <changelist id="62323343-547c-4947-8189-abb9c1bbce96" name="Changes" comment="" />
-      <created>1775793394891</created>
+      <changelist id="672d8df9-2a2a-4022-b01a-415c4ead4651" name="Changes" comment="" />
+      <created>1776004760724</created>
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
-      <updated>1775793394891</updated>
-      <workItem from="1775793396935" duration="12299000" />
-      <workItem from="1775917761632" duration="8938000" />
+      <updated>1776004760724</updated>
+      <workItem from="1776004762242" duration="1491000" />
     </task>
     <servers />
   </component>
@@ -225,98 +157,15 @@
     <breakpoint-manager>
       <breakpoints>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/clients/ts_api.py</url>
-          <line>36</line>
-          <option name="timeStamp" value="37" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/mcp-server/server.py</url>
-          <line>46</line>
-          <option name="timeStamp" value="108" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/mcp-server/server.py</url>
-          <line>45</line>
-          <option name="timeStamp" value="109" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/aibot/ollama_api.py</url>
-          <line>14</line>
-          <option name="timeStamp" value="110" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/aibot/ollama_api.py</url>
-          <line>29</line>
-          <option name="timeStamp" value="111" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/mcp-client/client.py</url>
-          <line>193</line>
-          <option name="timeStamp" value="115" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/mcp-client/client.py</url>
-          <line>206</line>
-          <option name="timeStamp" value="120" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/mcp-client/client.py</url>
-          <line>173</line>
-          <option name="timeStamp" value="123" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/mcp-client/client.py</url>
-          <line>171</line>
-          <option name="timeStamp" value="127" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/mcp-client/client.py</url>
-          <line>200</line>
-          <option name="timeStamp" value="128" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/mcp-client/client.py</url>
-          <line>129</line>
-          <option name="timeStamp" value="130" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/mcp-server/user_lookup.py</url>
-          <line>93</line>
-          <option name="timeStamp" value="132" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/mcp-server/user_lookup.py</url>
-          <line>68</line>
-          <option name="timeStamp" value="137" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/mcp-client/client.py</url>
-          <line>157</line>
-          <option name="timeStamp" value="140" />
+          <url>file://$PROJECT_DIR$/mcp-server-client/mcp_client/client.py</url>
+          <line>168</line>
+          <option name="timeStamp" value="3" />
         </line-breakpoint>
       </breakpoints>
-      <default-breakpoints>
-        <breakpoint type="python-exception">
-          <properties notifyOnTerminate="true" exception="BaseException">
-            <option name="notifyOnTerminate" value="true" />
-          </properties>
-        </breakpoint>
-      </default-breakpoints>
     </breakpoint-manager>
-    <watches-manager>
-      <configuration name="PythonConfigurationType">
-        <watch expression="self.ollama_tools" language="Python" />
-        <watch expression="response.json().get('response', '')" language="Python" />
-      </configuration>
-    </watches-manager>
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
-    <SUITE FILE_PATH="coverage/energy_mcp_system$health_check.coverage" NAME="health_check Coverage Results" MODIFIED="1775909755172" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/mcp-server" />
-    <SUITE FILE_PATH="coverage/energy_mcp_system$client.coverage" NAME="client Coverage Results" MODIFIED="1775968362960" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/mcp-client" />
-    <SUITE FILE_PATH="coverage/energy_mcp_system$rabbitMqService.coverage" NAME="rabbitMqService Coverage Results" MODIFIED="1775793940369" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/rabbit-mq" />
-    <SUITE FILE_PATH="coverage/energy_mcp_system$test_system.coverage" NAME="test_system Coverage Results" MODIFIED="1775894980359" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
-    <SUITE FILE_PATH="coverage/energy_mcp_system$server.coverage" NAME="server Coverage Results" MODIFIED="1775967644369" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/mcp-server" />
-    <SUITE FILE_PATH="coverage/energy_mcp_system$ollama_api.coverage" NAME="ollama_api Coverage Results" MODIFIED="1775917926756" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/ollama" />
-    <SUITE FILE_PATH="coverage/energy_mcp_system$user_lookup.coverage" NAME="user_lookup Coverage Results" MODIFIED="1775967069180" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/mcp-server" />
+    <SUITE FILE_PATH="coverage/energy_mcp_system$client.coverage" NAME="client Coverage Results" MODIFIED="1776005849650" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/mcp-server-client/mcp_client" />
+    <SUITE FILE_PATH="coverage/energy_mcp_system$server.coverage" NAME="server Coverage Results" MODIFIED="1776005739487" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/mcp-server-client/mcp_server" />
   </component>
 </project>

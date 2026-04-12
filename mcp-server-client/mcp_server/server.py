@@ -19,7 +19,7 @@ logging.basicConfig(
     level=getattr(logging, LOG_LEVEL),
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
     handlers=[
-        logging.FileHandler("/Users/mugeesh/git2/POC/MCP/energy-mcp-system/server.log"),
+        logging.FileHandler("server.log"),
         logging.StreamHandler()
     ]
 )
@@ -160,9 +160,6 @@ def main():
     logger.info("🚀 Starting Energy MCP Server (stdio transport)")
     mcp.run(transport="stdio")
 
-
-if __name__ == "__main__":
-    main()
 
 if __name__ == "__main__":
     main()

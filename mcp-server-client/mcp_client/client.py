@@ -19,12 +19,11 @@ import ollama
 from mcp import ClientSession, StdioServerParameters
 from mcp.client.stdio import stdio_client
 from mcp.types import CallToolResult
+from dotenv import load_dotenv
 
+load_dotenv()
 # ========================= CONFIG =========================
-MCP_SERVER_PATH = os.getenv(
-    "MCP_SERVER_PATH",
-    "/Users/mugeesh/git2/POC/MCP/energy-mcp-system/mcp-server"
-)
+MCP_SERVER_PATH = os.getenv("MCP_SERVER_PATH")
 OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "qwen3:1.7b")
 
 logging.basicConfig(
@@ -44,7 +43,6 @@ class EnergyMCPAgent:
         self.messages: List[Dict] = []
         self._connected = False
         self.max_history = int(os.getenv("MCP_MAX_HISTORY", 12))
-
 
     async def __aenter__(self):
         await self.connect()
@@ -98,7 +96,6 @@ class EnergyMCPAgent:
 
         self._connected = True
         logger.info(f"✅ Connected. Loaded {len(self.ollama_tools)} MCP tools.")
-
 
     def _mcp_tool_to_ollama(self, mcp_tool) -> Dict:
         """Convert MCP Tool object → Ollama tool schema (critical fix)"""
@@ -159,7 +156,7 @@ class EnergyMCPAgent:
 
         max_steps = 8
         for step in range(max_steps):
-            logger.info("\n Thinking (step {step + 1})...")
+            logger.info(f"\n Thinking (step {step + 1})...")
             logger.info(f"all messages : {self.messages}")
 
             response = ollama.chat(
@@ -175,11 +172,12 @@ class EnergyMCPAgent:
 
             # No tool calls → final answer
             if not message.get("tool_calls"):
-                print("\n" + "═" * 70)
-                print("✅ Answer:")
-                print(message["content"])
-                print("═" * 70)
-                return message["content"]
+                final_content = message.get("content", "No response generated.")
+                logger.debug("\n" + "═" * 70)
+                logger.debug("✅ Answer:")
+                logger.debug(final_content)
+                logger.debug("═" * 70)
+                return final_content
 
             # Handle tool calls
             for tool_call in message.get("tool_calls", []):
@@ -204,8 +202,8 @@ class EnergyMCPAgent:
                     "tool_call_id": tool_call.get("id")
                 })
 
-        logger.error(f"⚠️  Reached maximum reasoning steps.")
-        return "Sorry, I couldn't complete the request."
+        print("⚠️ Max steps reached.")
+        return "Sorry, I couldn't complete the request after multiple steps."
 
     async def close(self) -> None:
         """Clean shutdown."""
@@ -223,6 +221,10 @@ class EnergyMCPAgent:
         # Keep last (max_history - 1) messages
         self.messages = [system_prompt] + self.messages[-(self.max_history - 1):]
         logger.debug(f"History trimmed to {len(self.messages)} messages")
+
+    async def clear_all_history(self):
+        self.messages: List[Dict] = []
+        return {"status": "Done"}
 
 # ====================== Interactive Mode ======================
 async def main():

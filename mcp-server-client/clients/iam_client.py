@@ -18,9 +18,9 @@ logging.basicConfig(
 class IAMClient:
 
     def __init__(self):
-        self.base_url = os.getenv("iam_url")
-        self.username = os.getenv("iam_username")
-        self.password = os.getenv("iam_password")
+        self.base_url = os.getenv("IAM_URL")
+        self.username = os.getenv("IAM_USERNAME")
+        self.password = os.getenv("IAM_PASSWORD")
         self.user_token = None
         self.token = self.get_token_iam()
 
