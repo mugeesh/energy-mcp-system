@@ -3,15 +3,13 @@ import { NextResponse } from "next/server";
 
 export async function GET() {
     try {
-        console.log("[Tools API] Fetching tools from backend...");
-
-        const backendResponse = await fetch("http://localhost:8000/tools", {
+        const backendUrl = process.env.MCP_BACKEND_SERVER_URL || 'http://localhost:8000';
+        const backendResponse = await fetch(`${backendUrl}/tools`, {
             method: "GET",
             headers: {
                 "Content-Type": "application/json",
             },
         });
-
         if (!backendResponse.ok) {
             console.error(`Backend responded with status: ${backendResponse.status}`);
             return NextResponse.json(

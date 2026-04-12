@@ -42,7 +42,9 @@ class UserLookUp:
             self.user_lookup = {}
             for eb_user in self.users_cache:
                 user_id = str(eb_user["id"])
-                user_full_name = eb_user["firstName"].lower() +" " +eb_user["lastName"].lower()
+                user_full_name = (
+                    eb_user["firstName"].lower() + " " + eb_user["lastName"].lower()
+                )
 
                 # Add name mapping
                 self.user_lookup[user_full_name] = user_id
@@ -96,7 +98,6 @@ class UserLookUp:
                 return user
         return None
 
-
     def list_all_users(self) -> List[Dict]:
         """Return list of all users with basic info"""
         if not self.users_cache:
@@ -105,16 +106,17 @@ class UserLookUp:
         return [
             {
                 "id": user["id"],
-                "name": user["firstName"] +" "+ user["lastName"],
+                "name": user["firstName"] + " " + user["lastName"],
                 "email": user.get("email", "N/A"),
                 "position": user.get("position", "N/A"),
                 "contacts": user.get("contacts", "N/A"),
                 "role": user.get("role", "N/A"),
-                "lastLoginAt": user.get("lastLoginAt", "UNKNOWN"),#'2022-02-07T07:46:27.673Z'
+                "lastLoginAt": user.get(
+                    "lastLoginAt", "UNKNOWN"
+                ),  #'2022-02-07T07:46:27.673Z'
             }
             for user in self.users_cache
         ]
-
 
 
 if __name__ == "__main__":
@@ -126,10 +128,11 @@ if __name__ == "__main__":
     users = sm.list_all_users()
     print(f"\nFound {len(users)} users:")
     for user_info in users[:5]:  # Show first 5
-        print(f"  - {user_info['name']} (ID: {user_info['id']})  (email: {user_info['email']})  (role: {user_info['role']})")
+        print(
+            f"  - {user_info['name']} (ID: {user_info['id']})  (email: {user_info['email']})  (role: {user_info['role']})"
+        )
 
     # Test finding a user
     test_user = "Mugeesh Husain"
     eb_user_id = sm.find_user_id(test_user)
     print(f"\nLooking for '{test_user}': Found ID {eb_user_id}")
-

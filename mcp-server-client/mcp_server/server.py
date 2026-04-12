@@ -2,13 +2,15 @@
 import logging
 import os
 import sys
-from typing import Any, Dict, Optional, List
+from typing import Any, Dict, List, Optional
+
 from site_lookup import SiteLookUp
 from user_lookup import UserLookUp
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from mcp.server.fastmcp import FastMCP
+
 LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO")
 
 # Constants
@@ -18,10 +20,7 @@ RABBITMQ_QUEUE = os.getenv("RABBITMQ_QUEUE", "energy_request_queue")
 logging.basicConfig(
     level=getattr(logging, LOG_LEVEL),
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-    handlers=[
-        logging.FileHandler("server.log"),
-        logging.StreamHandler()
-    ]
+    handlers=[logging.FileHandler("server.log"), logging.StreamHandler()],
 )
 logger = logging.getLogger("EnergyMCPServer")
 
@@ -50,7 +49,8 @@ def list_all_sites() -> List[Dict]:
 @mcp.tool()
 def search_sites(query: str) -> List[Dict]:
     """Search for sites by name, partial name, or ID.
-    Returns matching sites with title and ID. Use when the exact site name is unclear."""
+    Returns matching sites with title and ID. Use when the exact site name is unclear.
+    """
     sm = get_site_lookup()
     sites = sm.list_all_sites()
     query = query.lower().strip()
@@ -60,7 +60,7 @@ def search_sites(query: str) -> List[Dict]:
         title = site["title"].lower()
         if query in title or site["id"] == query:
             matches.append(site)
-    logger.debug(f'site match :{matches}')
+    logger.debug(f"site match :{matches}")
     return matches
 
 
@@ -96,9 +96,7 @@ def get_energy_consumption(site_identifier: str, days: int = 7) -> Dict[str, Any
 
     date_filter = sm.parse_date_range(days)
     energy_data = sm.get_energy_consumption(
-        site_id=site_id,
-        from_date=date_filter["from"],
-        to_date=date_filter["to"]
+        site_id=site_id, from_date=date_filter["from"], to_date=date_filter["to"]
     )
 
     return {
@@ -107,8 +105,6 @@ def get_energy_consumption(site_identifier: str, days: int = 7) -> Dict[str, Any
         "period": date_filter["description"],
         "data": energy_data,
     }
-
-
 
 
 @mcp.tool()
@@ -132,7 +128,7 @@ def search_users(query: str) -> List[Dict]:
         name = user["name"].lower()
         if query in name or user["id"] == query:
             matches.append(user)
-    logger.debug(f'user match :{matches}')
+    logger.debug(f"user match :{matches}")
     return matches
 
 
@@ -145,6 +141,7 @@ def get_user_details(user_identifier: str) -> Dict:
         return {"error": "User not found"}
     return user_memory.get_user_details(site_id) or {"error": "Details not available"}
 
+
 def get_user_lookup() -> UserLookUp:
     """Lazy initialization so the server starts instantly."""
     global user_lookup
@@ -152,7 +149,6 @@ def get_user_lookup() -> UserLookUp:
         logger.info("Initializing UserLookUp...")
         user_lookup = UserLookUp()
     return user_lookup
-
 
 
 def main():

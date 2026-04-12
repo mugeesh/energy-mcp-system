@@ -2,15 +2,18 @@ import asyncio
 import json
 import subprocess
 
+
 async def test_mcp_server():
     # Start the server process
     process = await asyncio.create_subprocess_exec(
         "/usr/local/bin/uv",
-        "--directory", "/mcp_server",
-        "run", "server.py",
+        "--directory",
+        "/mcp_server",
+        "run",
+        "server.py",
         stdin=subprocess.PIPE,
         stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE
+        stderr=subprocess.PIPE,
     )
 
     # Initialize connection first (required by MCP)
@@ -18,10 +21,7 @@ async def test_mcp_server():
         "jsonrpc": "2.0",
         "id": 1,
         "method": "initialize",
-        "params": {
-            "protocolVersion": "0.1.0",
-            "capabilities": {}
-        }
+        "params": {"protocolVersion": "0.1.0", "capabilities": {}},
     }
 
     print("Sending initialize request...")
@@ -33,21 +33,13 @@ async def test_mcp_server():
     print("Initialize response:", response_line.decode())
 
     # Send initialized notification
-    initialized_notification = {
-        "jsonrpc": "2.0",
-        "method": "notifications/initialized"
-    }
+    initialized_notification = {"jsonrpc": "2.0", "method": "notifications/initialized"}
 
     process.stdin.write((json.dumps(initialized_notification) + "\n").encode())
     await process.stdin.drain()
 
     # Now list tools
-    tools_request = {
-        "jsonrpc": "2.0",
-        "id": 2,
-        "method": "tools/list",
-        "params": {}
-    }
+    tools_request = {"jsonrpc": "2.0", "id": 2, "method": "tools/list", "params": {}}
 
     print("\nSending tools/list request...")
     process.stdin.write((json.dumps(tools_request) + "\n").encode())
@@ -62,10 +54,7 @@ async def test_mcp_server():
         "jsonrpc": "2.0",
         "id": 3,
         "method": "tools/call",
-        "params": {
-            "name": "list_all_sites",
-            "arguments": {}
-        }
+        "params": {"name": "list_all_sites", "arguments": {}},
     }
 
     print("\nSending list_all_sites call...")
@@ -87,11 +76,8 @@ async def test_mcp_server():
         "method": "tools/call",
         "params": {
             "name": "get_energy_consumption",
-            "arguments": {
-                "site_name": "Daniel Hub",
-                "days": 7
-            }
-        }
+            "arguments": {"site_name": "Daniel Hub", "days": 7},
+        },
     }
 
     print("\nSending get_energy_consumption call...")
@@ -126,6 +112,7 @@ async def test_mcp_server():
     process.terminate()
     await process.wait()
     print("\nTest completed")
+
 
 if __name__ == "__main__":
     asyncio.run(test_mcp_server())

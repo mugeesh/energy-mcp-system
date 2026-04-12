@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
-import { Send, Loader2, Zap, Trash2, RefreshCw } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import {useState, useRef, useEffect} from "react";
+import {Send, Loader2, Zap, Trash2, RefreshCw} from "lucide-react";
+import {Button} from "@/components/ui/button";
 import ChatMessage from "@/components/ChatMessage";
 import {Message, ToolInfo} from "@/lib/types";
 
@@ -14,13 +14,15 @@ export default function EnergyMCPChat() {
     const [isLoading, setIsLoading] = useState(false);
     const scrollRef = useRef<HTMLDivElement>(null);
 
-
     // Load available tools on component mount
     const loadTools = async () => {
         setIsLoadingTools(true);
         try {
-            const res = await fetch('/api/tools');  // Note: no /app prefix
-            if (!res.ok) throw new Error("Failed to load tools");
+            const res = await fetch('/api/tools');
+            if (!res.ok) {
+                console.error("Failed to load tools:", res.status);
+                throw new Error("Failed to load tools");
+            }
             const data = await res.json();
 
             setTools(data.tools || []);
@@ -29,10 +31,10 @@ export default function EnergyMCPChat() {
             console.error("Failed to load tools:", err);
             // Fallback tools if API fails
             const fallbackTools: ToolInfo[] = [
-                 { name: "list_all_sites", description: "List all energy sites" },
-                { name: "search_sites", description: "Search sites by name" },
-                { name: "get_energy_consumption", description: "Get energy consumption data" },
-                { name: "get_site_details", description: "Get detailed site information" },
+                {index: 1, name: "list_all_sites", description: "List all energy sites"},
+                {index: 2, name: "search_sites", description: "Search sites by name"},
+                {index: 3, name: "get_energy_consumption", description: "Get energy consumption data"},
+                {index: 4, name: "get_site_details", description: "Get detailed site information"},
             ];
             setTools(fallbackTools);
         } finally {
@@ -42,7 +44,9 @@ export default function EnergyMCPChat() {
 
     // Load tools when component mounts
     useEffect(() => {
-        loadTools();
+        loadTools().then(() => {
+            console.log("clear history")
+        });
     }, []);
 
     const sendMessage = async () => {
@@ -63,7 +67,7 @@ export default function EnergyMCPChat() {
         try {
             const res = await fetch("/api/chat", {
                 method: "POST",
-                headers: { "Content-Type": "application/json" },
+                headers: {"Content-Type": "application/json"},
                 body: JSON.stringify({
                     message: currentInput,
                     history: messages.slice(-8),
@@ -84,21 +88,18 @@ export default function EnergyMCPChat() {
                 toolCalls: data.toolCalls || [],
                 timestamp: new Date(),
             };
-
             setMessages((prev) => [...prev, assistantMsg]);
-
-        } catch (err: any) {
+        } catch (err: unknown) {
             console.error("Failed to send message:", err);
 
             const errorMsg: Message = {
                 id: (Date.now() + 1).toString(),
                 role: "assistant",
-                content: err.message.includes("connect")
+                content: err instanceof Error && err.message.includes("connect")
                     ? "❌ Cannot connect to AI agent. Please make sure the Python backend is running on port 8000."
                     : "Sorry, something went wrong while processing your request.",
                 timestamp: new Date(),
             };
-
             setMessages((prev) => [...prev, errorMsg]);
         } finally {
             setIsLoading(false);
@@ -106,54 +107,28 @@ export default function EnergyMCPChat() {
     };
 
     const clearChat = () => {
-        setMessages([]);
-        clearAllBackendHistory()
+        setMessages([])
+        clearAllBackendHistory().then(() => {
+            console.log("clear history")
+        });
+
     };
 
     const clearAllBackendHistory = async () => {
-        // setInput("");
-        // setIsLoading(true);
-
         try {
-            const res = await fetch("/api/clear_history", {
+            const res = await fetch("/api/clearHistory", {
                 method: "POST",
-                headers: { "Content-Type": "application/json" }
+                headers: {"Content-Type": "application/json"}
             });
-
             if (!res.ok) {
                 const errorData = await res.json().catch(() => ({}));
-                throw new Error(errorData.error || `Server error: ${res.status}`);
+                console.error("Failed to clear backend:", errorData);
             }
-
-            const data = await res.json();
-
-            const assistantMsg: Message = {
-                id: (Date.now() + 1).toString(),
-                role: "assistant",
-                content: data.content || "No response received from agent.",
-                toolCalls: data.toolCalls || [],
-                timestamp: new Date(),
-            };
-
-            setMessages((prev) => [...prev, assistantMsg]);
-
-        } catch (err: any) {
-            console.error("Failed to send message:", err);
-
-            const errorMsg: Message = {
-                id: (Date.now() + 1).toString(),
-                role: "assistant",
-                content: err.message.includes("connect")
-                    ? "❌ Cannot connect to AI agent. Please make sure the Python backend is running on port 8000."
-                    : "Sorry, something went wrong while processing your request.",
-                timestamp: new Date(),
-            };
-
-            setMessages((prev) => [...prev, errorMsg]);
-        } finally {
-            setIsLoading(false);
+        } catch (err: unknown) {
+            console.error("Failed to clear history:", err);
         }
     };
+
 
     // Auto-scroll to bottom
     useEffect(() => {
@@ -171,7 +146,7 @@ export default function EnergyMCPChat() {
             <div className="w-72 border-r border-zinc-800 p-6 flex flex-col">
                 <div className="flex items-center gap-3 mb-10">
                     <div className="w-11 h-11 bg-emerald-600 rounded-2xl flex items-center justify-center">
-                        <Zap className="w-6 h-6 text-white" />
+                        <Zap className="w-6 h-6 text-white"/>
                     </div>
                     <div>
                         <h1 className="text-2xl font-bold tracking-tight">EnergyInsight</h1>
@@ -189,16 +164,15 @@ export default function EnergyMCPChat() {
                         onClick={loadTools}
                         disabled={isLoadingTools}
                         className="h-7 w-7 p-0"
-                    >
-                        <RefreshCw className={`w-4 h-4 ${isLoadingTools ? "animate-spin" : ""}`} />
+                    ><RefreshCw className={`w-4 h-4 ${isLoadingTools ? "animate-spin" : ""}`}/>
                     </Button>
                 </div>
 
                 <div className="space-y-1 text-sm overflow-y-auto flex-1 pr-2">
                     {tools.length > 0 ? (
-                        tools.map((tool, index) => (
+                        (tools.map((tool) =>
                             <div
-                                key={index}
+                                key={tool.index}
                                 className="px-3 py-2.5 bg-zinc-900 hover:bg-zinc-800 rounded-lg transition-colors"
                                 title={tool.description}
                             >
@@ -222,7 +196,7 @@ export default function EnergyMCPChat() {
                     className="mt-6 flex items-center gap-2"
                     onClick={clearChat}
                 >
-                    <Trash2 className="w-4 h-4" />
+                    <Trash2 className="w-4 h-4"/>
                     Clear Conversation
                 </Button>
             </div>
@@ -232,7 +206,7 @@ export default function EnergyMCPChat() {
                 <header className="h-16 border-b border-zinc-800 flex items-center px-8 bg-zinc-950">
                     <h2 className="font-semibold text-lg">Energy Consumption AI Assistant</h2>
                     <div className="ml-auto text-xs text-emerald-500 font-mono">
-                        Backend: http://localhost:8000
+                        Backend: {process.env.NEXT_PUBLIC_MCP_BACKEND_SERVER_URL}
                     </div>
                 </header>
 
@@ -243,7 +217,7 @@ export default function EnergyMCPChat() {
                 >
                     {messages.length === 0 ? (
                         <div className="h-full flex flex-col items-center justify-center text-center">
-                            <Zap className="w-20 h-20 text-emerald-600 mb-6 opacity-80" />
+                            <Zap className="w-20 h-20 text-emerald-600 mb-6 opacity-80"/>
                             <h3 className="text-3xl font-medium mb-3">Welcome to EnergyInsight</h3>
                             <p className="text-zinc-500 max-w-md text-lg">
                                 Ask anything about your User, sites and site energy consumption
@@ -255,13 +229,13 @@ export default function EnergyMCPChat() {
                         </div>
                     ) : (
                         messages.map((msg) => (
-                            <ChatMessage key={msg.id} message={msg} />
+                            <ChatMessage key={msg.id} message={msg}/>
                         ))
                     )}
 
                     {isLoading && (
                         <div className="flex items-center gap-3 text-zinc-500 mt-4">
-                            <Loader2 className="w-5 h-5 animate-spin" />
+                            <Loader2 className="w-5 h-5 animate-spin"/>
                             <span>Agent is thinking and may call tools...</span>
                         </div>
                     )}
@@ -275,7 +249,7 @@ export default function EnergyMCPChat() {
                             value={input}
                             onChange={(e) => setInput(e.target.value)}
                             onKeyDown={(e) => e.key === "Enter" && sendMessage()}
-                            placeholder="Ask about energy consumption, sites, or data..."
+                            placeholder="Ask about energy consumption, sites, User or data..."
                             className="flex-1 bg-zinc-900 border border-zinc-700 rounded-2xl px-6 py-4 focus:outline-none focus:border-emerald-600 text-base placeholder:text-zinc-500"
                             disabled={isLoading}
                         />
@@ -286,9 +260,9 @@ export default function EnergyMCPChat() {
                             className="px-8 bg-emerald-600 hover:bg-emerald-700"
                         >
                             {isLoading ? (
-                                <Loader2 className="w-5 h-5 animate-spin" />
+                                <Loader2 className="w-5 h-5 animate-spin"/>
                             ) : (
-                                <Send className="w-5 h-5" />
+                                <Send className="w-5 h-5"/>
                             )}
                         </Button>
                     </div>

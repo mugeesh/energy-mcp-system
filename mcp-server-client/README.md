@@ -7,6 +7,7 @@ setup steps
 5. uv add pika requests
 6. uv add pika python-dotenv
 7. uv add mcp ollama
+8. uv add fastapi
 7. uv sync
 
 ### run on local PC

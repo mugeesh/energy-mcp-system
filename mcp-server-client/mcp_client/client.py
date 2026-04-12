@@ -15,11 +15,12 @@ import os
 from contextlib import AsyncExitStack
 from typing import Any, Dict, List, Optional
 
-import ollama
+from dotenv import load_dotenv
 from mcp import ClientSession, StdioServerParameters
 from mcp.client.stdio import stdio_client
 from mcp.types import CallToolResult
-from dotenv import load_dotenv
+
+import ollama
 
 load_dotenv()
 # ========================= CONFIG =========================
@@ -27,8 +28,7 @@ MCP_SERVER_PATH = os.getenv("MCP_SERVER_PATH")
 OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "qwen3:1.7b")
 
 logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger("EnergyMCPAgent")
 
@@ -78,9 +78,7 @@ class EnergyMCPAgent:
 
         # Load tools once
         tools_response = await self.session.list_tools()
-        self.ollama_tools = [
-            self._mcp_tool_to_ollama(t) for t in tools_response.tools
-        ]
+        self.ollama_tools = [self._mcp_tool_to_ollama(t) for t in tools_response.tools]
         # Initialize conversation with system prompt
         self.messages = [
             {
@@ -90,7 +88,7 @@ class EnergyMCPAgent:
                     "Use the available tools to answer questions about sites information or energy consumption or User information. if user asked for consumption or if user asked some users details  "
                     "Be concise, accurate, and professional. "
                     "If you need information, call the appropriate tool."
-                )
+                ),
             }
         ]
 
@@ -103,13 +101,11 @@ class EnergyMCPAgent:
             "type": "function",
             "function": {
                 "name": mcp_tool.name,
-                "description": mcp_tool.description or f"Execute the {mcp_tool.name} tool",
-                "parameters": mcp_tool.inputSchema or {
-                    "type": "object",
-                    "properties": {},
-                    "required": []
-                }
-            }
+                "description": mcp_tool.description
+                or f"Execute the {mcp_tool.name} tool",
+                "parameters": mcp_tool.inputSchema
+                or {"type": "object", "properties": {}, "required": []},
+            },
         }
 
     async def _call_tool(self, tool_name: str, arguments: Dict[str, Any]) -> Any:
@@ -119,26 +115,28 @@ class EnergyMCPAgent:
 
         try:
             result: CallToolResult = await self.session.call_tool(
-                name=tool_name,
-                arguments=arguments
+                name=tool_name, arguments=arguments
             )
 
             # Best practice result parsing
             if result.structuredContent:
-                return result.structuredContent.get("result") or result.structuredContent
+                return (
+                    result.structuredContent.get("result") or result.structuredContent
+                )
 
             if result.content:
-                texts = [b.text.strip() for b in result.content if hasattr(b, "text") and b.text]
+                texts = [
+                    b.text.strip()
+                    for b in result.content
+                    if hasattr(b, "text") and b.text
+                ]
                 if len(texts) == 1:
                     try:
                         return json.loads(texts[0])
                     except (json.JSONDecodeError, TypeError):
                         return texts[0]
                 # Multiple items
-                return [
-                    json.loads(t) if t.startswith("{") else t
-                    for t in texts
-                ]
+                return [json.loads(t) if t.startswith("{") else t for t in texts]
             return None
 
         except Exception as e:
@@ -160,9 +158,7 @@ class EnergyMCPAgent:
             logger.info(f"all messages : {self.messages}")
 
             response = ollama.chat(
-                model=OLLAMA_MODEL,
-                messages=self.messages,
-                tools=self.ollama_tools
+                model=OLLAMA_MODEL, messages=self.messages, tools=self.ollama_tools
             )
             message = response["message"]
 
@@ -196,11 +192,13 @@ class EnergyMCPAgent:
                 tool_result = await self._call_tool(tool_name, arguments)
 
                 # Add tool response back to conversation
-                self.messages.append({
-                    "role": "tool",
-                    "content": json.dumps(tool_result, ensure_ascii=False),
-                    "tool_call_id": tool_call.get("id")
-                })
+                self.messages.append(
+                    {
+                        "role": "tool",
+                        "content": json.dumps(tool_result, ensure_ascii=False),
+                        "tool_call_id": tool_call.get("id"),
+                    }
+                )
 
         print("⚠️ Max steps reached.")
         return "Sorry, I couldn't complete the request after multiple steps."
@@ -219,12 +217,13 @@ class EnergyMCPAgent:
         # Always keep system prompt (index 0)
         system_prompt = self.messages[0]
         # Keep last (max_history - 1) messages
-        self.messages = [system_prompt] + self.messages[-(self.max_history - 1):]
+        self.messages = [system_prompt] + self.messages[-(self.max_history - 1) :]
         logger.debug(f"History trimmed to {len(self.messages)} messages")
 
     async def clear_all_history(self):
         self.messages: List[Dict] = []
         return {"status": "Done"}
+
 
 # ====================== Interactive Mode ======================
 async def main():
@@ -235,7 +234,9 @@ async def main():
         print("Examples:")
         print("   • What is the energy consumption of Mugeesh Site last 10 days?")
         print("   • Show energy for E2E Validation-flagged-breakers")
-        print("   • can you give energy consumption for the Validation-flagged-breakers site last 8 days")
+        print(
+            "   • can you give energy consumption for the Validation-flagged-breakers site last 8 days"
+        )
         print("   • List all sites")
         print("   • === OR ====")
         print("   • List all User")

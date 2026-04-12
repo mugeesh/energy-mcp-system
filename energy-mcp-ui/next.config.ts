@@ -1,7 +1,15 @@
-import type { NextConfig } from "next";
+import path from 'path';
 
-const nextConfig: NextConfig = {
-  /* config options here */
-};
+module.exports = {
+    env: {
+        MCP_BACKEND_SERVER_URL: process.env.MCP_BACKEND_SERVER_URL,
+    },
+    // Load env from parent directory
+    experimental: {
+        serverComponentsExternalPackages: [],
+    },
+}
 
-export default nextConfig;
+// Load custom env file
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+require('dotenv').config({ path: path.join(__dirname, '../.env') });

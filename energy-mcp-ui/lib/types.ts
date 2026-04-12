@@ -21,6 +21,7 @@ export type ChatResponse = {
 };
 
 export type ToolInfo = {
+    index: number
     name: string;
     description: string;
 };
