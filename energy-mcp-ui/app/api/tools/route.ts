@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 
 export async function GET() {
     try {
-        const backendUrl = process.env.MCP_BACKEND_SERVER_URL || 'http://localhost:8000';
+        const backendUrl = process.env.NEXT_PUBLIC_MCP_BACKEND_SERVER_URL || 'http://localhost:8000';
         const backendResponse = await fetch(`${backendUrl}/tools`, {
             method: "GET",
             headers: {
