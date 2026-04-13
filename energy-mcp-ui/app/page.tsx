@@ -141,12 +141,12 @@ export default function EnergyMCPChat() {
     }, [messages]);
 
     return (
-        <div className="flex h-screen bg-zinc-950 text-white">
+        <div className="flex h-screen bg-[#f8fafc]">
             {/* Sidebar */}
             <div className="w-72 border-r border-slate-200 bg-white p-6 flex flex-col">
                 <div className="flex items-center gap-3 mb-10">
                     <div className="w-11 h-11 bg-emerald-600 rounded-2xl flex items-center justify-center">
-                        <Zap className="w-6 h-6 text-white" />
+                        <Zap className="w-6 h-6 text-white"/>
                     </div>
                     <div>
                         <h1 className="text-2xl font-bold text-slate-900">EnergyInsight</h1>
@@ -164,7 +164,7 @@ export default function EnergyMCPChat() {
                         onClick={loadTools}
                         disabled={isLoadingTools}
                     >
-                        <RefreshCw className={`w-4 h-4 ${isLoadingTools ? "animate-spin" : ""}`} />
+                        <RefreshCw className={`w-4 h-4 ${isLoadingTools ? "animate-spin" : ""}`}/>
                     </Button>
                 </div>
 
@@ -188,12 +188,13 @@ export default function EnergyMCPChat() {
                     )}
                 </div>
 
+                {/* Clear Button - Now properly visible */}
                 <Button
                     variant="destructive"
-                    className="mt-6"
+                    className="mt-8 flex items-center gap-2"
                     onClick={clearChat}
                 >
-                    <Trash2 className="w-4 h-4 mr-2" />
+                    <Trash2 className="w-4 h-4"/>
                     Clear Conversation
                 </Button>
             </div>
@@ -207,24 +208,28 @@ export default function EnergyMCPChat() {
                     </div>
                 </header>
 
-                <div ref={scrollRef} className="flex-1 overflow-y-auto p-8 space-y-8 chat-scroll bg-slate-50">
+                <div
+                    ref={scrollRef}
+                    className="flex-1 overflow-y-auto p-8 space-y-8 chat-scroll bg-[#f8fafc]"
+                >
                     {messages.length === 0 ? (
                         <div className="h-full flex flex-col items-center justify-center text-center">
-                            <div className="w-20 h-20 bg-emerald-100 rounded-full flex items-center justify-center mb-6">
-                                <Zap className="w-12 h-12 text-emerald-600" />
+                            <div
+                                className="w-20 h-20 bg-emerald-100 rounded-full flex items-center justify-center mb-6">
+                                <Zap className="w-12 h-12 text-emerald-600"/>
                             </div>
                             <h3 className="text-3xl font-semibold text-slate-900 mb-3">Welcome to EnergyInsight</h3>
                             <p className="text-slate-600 max-w-md">
-                                Ask me anything about energy sites and consumption data
+                                Ask me anything about energy sites and consumption data or User information
                             </p>
                         </div>
                     ) : (
-                        messages.map((msg) => <ChatMessage key={msg.id} message={msg} />)
+                        messages.map((msg) => <ChatMessage key={msg.id} message={msg}/>)
                     )}
 
                     {isLoading && (
                         <div className="flex items-center gap-3 text-slate-500">
-                            <Loader2 className="w-5 h-5 animate-spin" />
+                            <Loader2 className="w-5 h-5 animate-spin"/>
                             Agent is thinking...
                         </div>
                     )}
@@ -248,7 +253,7 @@ export default function EnergyMCPChat() {
                             size="lg"
                             className="px-8 bg-emerald-600 hover:bg-emerald-700"
                         >
-                            {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Send className="w-5 h-5" />}
+                            {isLoading ? <Loader2 className="w-5 h-5 animate-spin"/> : <Send className="w-5 h-5"/>}
                         </Button>
                     </div>
                 </div>
