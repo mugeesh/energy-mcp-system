@@ -4,7 +4,7 @@ import { Message } from "@/lib/types";
 import ToolCall from "./ui/ToolCall";
 import { User, Bot } from "lucide-react";
 
-export default function ChatMessage({ message }: { message: Message }) {
+export default function ChatMessage({ message }: Readonly<{ message: Message }>) {
     const isUser = message.role === "user";
 
     return (

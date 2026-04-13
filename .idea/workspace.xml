@@ -37,7 +37,7 @@
     "git-widget-placeholder": "main",
     "junie.onboarding.icon.badge.shown": "true",
     "kotlin-language-version-configured": "true",
-    "last_opened_file_path": "/Users/mugeesh/git2/POC/MCP/energy-mcp-system/energy-mcp-ui",
+    "last_opened_file_path": "/Users/mugeesh/git2/POC/MCP/energy-mcp-system/energy-mcp-ui/app",
     "node.js.detected.package.eslint": "true",
     "node.js.detected.package.tslint": "true",
     "node.js.selected.package.eslint": "(autodetect)",
@@ -54,8 +54,8 @@
 }]]></component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
-      <recent name="$PROJECT_DIR$/energy-mcp-ui" />
       <recent name="$PROJECT_DIR$/energy-mcp-ui/app" />
+      <recent name="$PROJECT_DIR$/energy-mcp-ui" />
       <recent name="$PROJECT_DIR$" />
     </key>
     <key name="MoveFile.RECENT_KEYS">
@@ -156,7 +156,7 @@
       <option name="presentableId" value="Default" />
       <updated>1776004760724</updated>
       <workItem from="1776004762242" duration="5686000" />
-      <workItem from="1776075988734" duration="4393000" />
+      <workItem from="1776075988734" duration="4709000" />
     </task>
     <servers />
   </component>
