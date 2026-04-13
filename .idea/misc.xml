@@ -3,6 +3,9 @@
   <component name="Black">
     <option name="sdkName" value="Python 3.14 (energy-mcp-system)" />
   </component>
+  <component name="JavaScriptSettings">
+    <option name="languageLevel" value="FLOW" />
+  </component>
   <component name="ProjectRootManager" version="2" languageLevel="JDK_25" default="true" project-jdk-name="Python 3.14 (energy-mcp-system)" project-jdk-type="Python SDK">
     <output url="file://$PROJECT_DIR$/out" />
   </component>
