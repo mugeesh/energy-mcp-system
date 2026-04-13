@@ -14,9 +14,9 @@
 }
 
 :root {
-    /* Clean Professional Light Mode */
-    --background: #ffffff;
-    --foreground: #0f172a;           /* Deep slate */
+    /* Balanced Light Mode - Not too bright */
+    --background: #f8fafc;        /* Soft slate-50 */
+    --foreground: #0f172a;        /* Deep slate */
 
     --card: #ffffff;
     --card-foreground: #0f172a;
@@ -24,14 +24,14 @@
     --popover: #ffffff;
     --popover-foreground: #0f172a;
 
-    /* Energy Green Theme */
-    --primary: #10b981;              /* Emerald-500 */
+    /* Nice Energy Green */
+    --primary: #10b981;           /* Emerald 500 */
     --primary-foreground: #ffffff;
 
     --secondary: #f1f5f9;
     --secondary-foreground: #0f172a;
 
-    --muted: #f8fafc;
+    --muted: #f1f5f9;
     --muted-foreground: #64748b;
 
     --accent: #10b981;
@@ -41,8 +41,15 @@
     --destructive-foreground: #ffffff;
 
     --border: #e2e8f0;
-    --input: #f8fafc;
+    --input: #ffffff;
     --ring: #10b981;
+}
+
+/* Force Light Mode */
+.dark, [data-theme="dark"] {
+    --background: #f8fafc;
+    --foreground: #0f172a;
+    --border: #e2e8f0;
 }
 
 body {
@@ -51,18 +58,10 @@ body {
     color: var(--foreground);
 }
 
-/* Force Light Mode */
-.dark, [data-theme="dark"] {
-    --background: #ffffff;
-    --foreground: #0f172a;
-    --border: #e2e8f0;
-    --card: #ffffff;
-}
-
 /* Scrollbar */
 .chat-scroll {
     scrollbar-width: thin;
-    scrollbar-color: #94a3b8 #f1f5f9;
+    scrollbar-color: #94a3b8 #e2e8f0;
 }
 
 .chat-scroll::-webkit-scrollbar {
@@ -74,26 +73,27 @@ body {
     border-radius: 20px;
 }
 
-/* Input Styling */
-input {
-    background-color: white;
-    border: 1px solid #e2e8f0;
-    color: #0f172a;
-}
-
-input:focus {
-    border-color: #10b981;
-    box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.15);
-}
-
-/* Tool cards in sidebar */
+/* Tool Cards */
 .tool-card {
-    background-color: #f8fafc;
+    background-color: #ffffff;
     border: 1px solid #e2e8f0;
     transition: all 0.2s ease;
 }
 
 .tool-card:hover {
-    background-color: #f1f5f9;
+    background-color: #f8fafc;
     border-color: #10b981;
+    box-shadow: 0 2px 8px rgba(16, 185, 129, 0.08);
+}
+
+/* Input */
+input {
+    background-color: white;
+    border: 1px solid #cbd5e1;
+    color: #0f172a;
+}
+
+input:focus {
+    border-color: #10b981;
+    box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.12);
 }

@@ -143,19 +143,19 @@ export default function EnergyMCPChat() {
     return (
         <div className="flex h-screen bg-zinc-950 text-white">
             {/* Sidebar */}
-            <div className="w-72 border-r border-zinc-800 p-6 flex flex-col">
+            <div className="w-72 border-r border-slate-200 bg-white p-6 flex flex-col">
                 <div className="flex items-center gap-3 mb-10">
                     <div className="w-11 h-11 bg-emerald-600 rounded-2xl flex items-center justify-center">
-                        <Zap className="w-6 h-6 text-white"/>
+                        <Zap className="w-6 h-6 text-white" />
                     </div>
                     <div>
-                        <h1 className="text-2xl font-bold tracking-tight">EnergyInsight</h1>
-                        <p className="text-emerald-500 text-sm">MCP + Ollama Agent</p>
+                        <h1 className="text-2xl font-bold text-slate-900">EnergyInsight</h1>
+                        <p className="text-emerald-600 text-sm">MCP + Ollama Agent</p>
                     </div>
                 </div>
 
-                <div className="flex items-center justify-between mb-3">
-                    <div className="text-xs uppercase tracking-widest text-zinc-500">
+                <div className="flex items-center justify-between mb-4">
+                    <div className="text-xs uppercase tracking-widest text-slate-500 font-medium">
                         AVAILABLE TOOLS
                     </div>
                     <Button
@@ -163,94 +163,83 @@ export default function EnergyMCPChat() {
                         size="sm"
                         onClick={loadTools}
                         disabled={isLoadingTools}
-                        className="h-7 w-7 p-0"
-                    ><RefreshCw className={`w-4 h-4 ${isLoadingTools ? "animate-spin" : ""}`}/>
+                    >
+                        <RefreshCw className={`w-4 h-4 ${isLoadingTools ? "animate-spin" : ""}`} />
                     </Button>
                 </div>
 
-                <div className="space-y-1 text-sm overflow-y-auto flex-1 pr-2">
+                <div className="space-y-2 flex-1 overflow-y-auto pr-2">
                     {tools.length > 0 ? (
-                        (tools.map((tool) =>
+                        tools.map((tool, index) => (
                             <div
-                                key={tool.index}
-                                className="px-3 py-2.5 bg-zinc-900 hover:bg-zinc-800 rounded-lg transition-colors"
-                                title={tool.description}
+                                key={index}
+                                className="tool-card px-4 py-3 rounded-xl text-sm border"
                             >
-                                <div className="font-mono text-emerald-400 text-xs">{tool.name}</div>
+                                <div className="font-mono text-emerald-600 font-medium">{tool.name}</div>
                                 {tool.description && (
-                                    <div className="text-zinc-500 text-xs mt-0.5 line-clamp-2">
+                                    <div className="text-slate-600 text-xs mt-1 line-clamp-2">
                                         {tool.description}
                                     </div>
                                 )}
                             </div>
                         ))
                     ) : (
-                        <div className="text-zinc-500 text-sm py-4 text-center">
-                            Loading tools...
-                        </div>
+                        <div className="text-slate-400 text-sm py-8 text-center">Loading tools...</div>
                     )}
                 </div>
 
                 <Button
                     variant="destructive"
-                    className="mt-6 flex items-center gap-2"
+                    className="mt-6"
                     onClick={clearChat}
                 >
-                    <Trash2 className="w-4 h-4"/>
+                    <Trash2 className="w-4 h-4 mr-2" />
                     Clear Conversation
                 </Button>
             </div>
 
             {/* Main Chat Area */}
-            <div className="flex-1 flex flex-col">
-                <header className="h-16 border-b border-zinc-800 flex items-center px-8 bg-zinc-950">
-                    <h2 className="font-semibold text-lg">Energy Consumption AI Assistant</h2>
-                    <div className="ml-auto text-xs text-emerald-500 font-mono">
-                        Backend: {process.env.NEXT_PUBLIC_MCP_BACKEND_SERVER_URL}
+            <div className="flex-1 flex flex-col bg-white">
+                <header className="h-16 border-b border-slate-200 flex items-center px-8">
+                    <h2 className="font-semibold text-xl text-slate-900">Energy Consumption AI Assistant</h2>
+                    <div className="ml-auto text-xs text-emerald-600 font-mono">
+                        Backend: http://localhost:8000
                     </div>
                 </header>
 
-                {/* Messages Area */}
-                <div
-                    ref={scrollRef}
-                    className="flex-1 overflow-y-auto p-8 space-y-8 chat-scroll"
-                >
+                <div ref={scrollRef} className="flex-1 overflow-y-auto p-8 space-y-8 chat-scroll bg-slate-50">
                     {messages.length === 0 ? (
                         <div className="h-full flex flex-col items-center justify-center text-center">
-                            <Zap className="w-20 h-20 text-emerald-600 mb-6 opacity-80"/>
-                            <h3 className="text-3xl font-medium mb-3">Welcome to EnergyInsight</h3>
-                            <p className="text-zinc-500 max-w-md text-lg">
-                                Ask anything about your User, sites and site energy consumption
-                            </p>
-                            <p className="text-sm text-zinc-600 mt-8">
-                                Example: &quot;Show me energy consumption of Mugeesh Site for last 10 days&quot;
-                                Example: &quot;tell me who is Marcus Hunger&quot;
+                            <div className="w-20 h-20 bg-emerald-100 rounded-full flex items-center justify-center mb-6">
+                                <Zap className="w-12 h-12 text-emerald-600" />
+                            </div>
+                            <h3 className="text-3xl font-semibold text-slate-900 mb-3">Welcome to EnergyInsight</h3>
+                            <p className="text-slate-600 max-w-md">
+                                Ask me anything about energy sites and consumption data
                             </p>
                         </div>
                     ) : (
-                        messages.map((msg) => (
-                            <ChatMessage key={msg.id} message={msg}/>
-                        ))
+                        messages.map((msg) => <ChatMessage key={msg.id} message={msg} />)
                     )}
 
                     {isLoading && (
-                        <div className="flex items-center gap-3 text-zinc-500 mt-4">
-                            <Loader2 className="w-5 h-5 animate-spin"/>
-                            <span>Agent is thinking and may call tools...</span>
+                        <div className="flex items-center gap-3 text-slate-500">
+                            <Loader2 className="w-5 h-5 animate-spin" />
+                            Agent is thinking...
                         </div>
                     )}
                 </div>
 
                 {/* Input Area */}
-                <div className="p-6 border-t border-zinc-800 bg-zinc-950">
+                <div className="p-6 border-t border-slate-200 bg-white">
                     <div className="flex gap-3 max-w-4xl mx-auto">
                         <input
                             type="text"
                             value={input}
                             onChange={(e) => setInput(e.target.value)}
                             onKeyDown={(e) => e.key === "Enter" && sendMessage()}
-                            placeholder="Ask about energy consumption, sites, User or data..."
-                            className="flex-1 bg-zinc-900 border border-zinc-700 rounded-2xl px-6 py-4 focus:outline-none focus:border-emerald-600 text-base placeholder:text-zinc-500"
+                            placeholder="Ask about energy consumption, sites, or data..."
+                            className="flex-1 bg-white border border-slate-300 rounded-2xl px-6 py-4 focus:outline-none focus:border-emerald-600 text-base"
                             disabled={isLoading}
                         />
                         <Button
@@ -259,11 +248,7 @@ export default function EnergyMCPChat() {
                             size="lg"
                             className="px-8 bg-emerald-600 hover:bg-emerald-700"
                         >
-                            {isLoading ? (
-                                <Loader2 className="w-5 h-5 animate-spin"/>
-                            ) : (
-                                <Send className="w-5 h-5"/>
-                            )}
+                            {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Send className="w-5 h-5" />}
                         </Button>
                     </div>
                 </div>

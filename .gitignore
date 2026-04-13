@@ -13,4 +13,4 @@ wheels/
 .venv
 .env
 .evn
-
+.idea/misc.xml
