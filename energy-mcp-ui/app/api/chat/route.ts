@@ -12,12 +12,16 @@ export async function POST(request: NextRequest) {
                 { status: 400 }
             );
         }
-
         console.log(`[Next.js API] Forwarding to Python backend: "${message.substring(0, 60)}..."`);
         const backendUrl = process.env.NEXT_PUBLIC_MCP_BACKEND_SERVER_URL || 'http://localhost:8000';
         const backendResponse = await fetch(`${backendUrl}/chat`, {
             method: "POST",
-            headers: request.headers,
+            headers: {
+                "Content-Type": "application/json",
+                ...(request.headers.get("authorization") && {
+                    Authorization: request.headers.get("authorization")!
+                }),
+            },
             body: JSON.stringify({
                 message: message.trim(),
                 history: history || [],

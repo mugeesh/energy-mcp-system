@@ -35,9 +35,8 @@ export default function EnergyMCPChat() {
             if (!res.ok) {
                 throw new Error("Invalid email or password");
             }
-
             const data = await res.json();
-            setToken(data.access_token);
+            setToken(data.accessToken);
             setIsLoggedIn(true);
             await loadTools();
         } catch (err: unknown) {

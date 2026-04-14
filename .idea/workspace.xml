@@ -28,7 +28,7 @@
   "keyToString": {
     "ModuleVcsDetector.initialDetectionPerformed": "true",
     "Python.client.executor": "Debug",
-    "Python.main.executor": "Debug",
+    "Python.main.executor": "Run",
     "Python.server.executor": "Run",
     "RunOnceActivity.ShowReadmeOnStart": "true",
     "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
@@ -59,6 +59,7 @@
       <recent name="$PROJECT_DIR$" />
     </key>
     <key name="MoveFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/energy-mcp-ui/components" />
       <recent name="$PROJECT_DIR$" />
     </key>
   </component>
@@ -156,7 +157,8 @@
       <option name="presentableId" value="Default" />
       <updated>1776004760724</updated>
       <workItem from="1776004762242" duration="5686000" />
-      <workItem from="1776075988734" duration="4709000" />
+      <workItem from="1776075988734" duration="4913000" />
+      <workItem from="1776151640366" duration="1809000" />
     </task>
     <servers />
   </component>
@@ -173,7 +175,7 @@
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/mcp-server-client/main.py</url>
-          <line>141</line>
+          <line>140</line>
           <option name="timeStamp" value="4" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
@@ -186,7 +188,7 @@
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
     <SUITE FILE_PATH="coverage/energy_mcp_system$client.coverage" NAME="client Coverage Results" MODIFIED="1776006884122" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/mcp-server-client/mcp_client" />
-    <SUITE FILE_PATH="coverage/energy_mcp_system$main.coverage" NAME="main Coverage Results" MODIFIED="1776006935100" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/mcp-server-client" />
+    <SUITE FILE_PATH="coverage/energy_mcp_system$main.coverage" NAME="main Coverage Results" MODIFIED="1776151892749" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/mcp-server-client" />
     <SUITE FILE_PATH="coverage/energy_mcp_system$server.coverage" NAME="server Coverage Results" MODIFIED="1776005739487" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/mcp-server-client/mcp_server" />
   </component>
 </project>

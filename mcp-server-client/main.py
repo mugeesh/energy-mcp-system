@@ -1,8 +1,7 @@
 # backend/app/main.py
 from contextlib import asynccontextmanager
-from operator import index
-from typing import Any, Dict, List, Optional
-
+from typing import Dict, List, Optional
+import uvicorn
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -160,6 +159,4 @@ async def root():
 
 
 if __name__ == "__main__":
-    import uvicorn
-
     uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
