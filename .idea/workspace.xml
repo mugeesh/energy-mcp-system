@@ -15,6 +15,10 @@
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
+  <component name="KubernetesApiPersistence"><![CDATA[{}]]></component>
+  <component name="KubernetesApiProvider"><![CDATA[{
+  "isMigrated": true
+}]]></component>
   <component name="ProjectColorInfo">{
   &quot;customColor&quot;: &quot;&quot;,
   &quot;associatedIndex&quot;: 2
@@ -158,7 +162,9 @@
       <updated>1776004760724</updated>
       <workItem from="1776004762242" duration="5686000" />
       <workItem from="1776075988734" duration="4913000" />
-      <workItem from="1776151640366" duration="1809000" />
+      <workItem from="1776151640366" duration="7370000" />
+      <workItem from="1776224351329" duration="603000" />
+      <workItem from="1776227548242" duration="2539000" />
     </task>
     <servers />
   </component>
@@ -169,26 +175,51 @@
     <breakpoint-manager>
       <breakpoints>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/mcp-server-client/mcp_client/client.py</url>
-          <line>164</line>
-          <option name="timeStamp" value="3" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/mcp-server-client/main.py</url>
-          <line>140</line>
+          <line>157</line>
           <option name="timeStamp" value="4" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/mcp-server-client/mcp_client/client.py</url>
-          <line>223</line>
+          <line>266</line>
           <option name="timeStamp" value="5" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/mcp-server-client/mcp_server/server.py</url>
+          <line>152</line>
+          <option name="timeStamp" value="24" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/mcp-server-client/mcp_client/client.py</url>
+          <line>227</line>
+          <option name="timeStamp" value="30" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/mcp-server-client/mcp_client/client.py</url>
+          <line>231</line>
+          <option name="timeStamp" value="31" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/mcp-server-client/mcp_client/client.py</url>
+          <line>208</line>
+          <option name="timeStamp" value="34" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/mcp-server-client/mcp_client/client.py</url>
+          <line>161</line>
+          <option name="timeStamp" value="36" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/mcp-server-client/mcp_client/client.py</url>
+          <line>135</line>
+          <option name="timeStamp" value="37" />
         </line-breakpoint>
       </breakpoints>
     </breakpoint-manager>
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
     <SUITE FILE_PATH="coverage/energy_mcp_system$client.coverage" NAME="client Coverage Results" MODIFIED="1776006884122" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/mcp-server-client/mcp_client" />
-    <SUITE FILE_PATH="coverage/energy_mcp_system$main.coverage" NAME="main Coverage Results" MODIFIED="1776151892749" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/mcp-server-client" />
+    <SUITE FILE_PATH="coverage/energy_mcp_system$main.coverage" NAME="main Coverage Results" MODIFIED="1776234919150" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/mcp-server-client" />
     <SUITE FILE_PATH="coverage/energy_mcp_system$server.coverage" NAME="server Coverage Results" MODIFIED="1776005739487" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/mcp-server-client/mcp_server" />
   </component>
 </project>

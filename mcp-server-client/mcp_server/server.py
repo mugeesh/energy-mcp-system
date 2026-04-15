@@ -15,7 +15,6 @@ LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO")
 
 # Constants
 RABBITMQ_QUEUE = os.getenv("RABBITMQ_QUEUE", "energy_request_queue")
-
 # Production logging format
 logging.basicConfig(
     level=getattr(logging, LOG_LEVEL),
@@ -29,20 +28,19 @@ site_lookup: Optional[SiteLookUp] = None
 user_lookup: Optional[UserLookUp] = None
 
 
-def get_site_lookup() -> SiteLookUp:
+def get_site_lookup(auth_token: Optional[str] = None) -> SiteLookUp:
     """Lazy initialization so the server starts instantly."""
     global site_lookup
     if site_lookup is None:
-        logger.info("Initializing SiteLookUp...")
-        site_lookup = SiteLookUp()
+        site_lookup = SiteLookUp(auth_token)
     return site_lookup
 
 
 @mcp.tool()
-def list_all_sites() -> List[Dict]:
+def list_all_sites(auth_token: Optional[str] = None) -> List[Dict]:
     """Return all available Energybox sites with basic info.
     Use this when the user asks to see all sites or doesn't know the exact name."""
-    sm = get_site_lookup()
+    sm = get_site_lookup(auth_token)
     return sm.list_all_sites()
 
 
@@ -75,13 +73,20 @@ def get_site_details(site_identifier: str) -> Dict:
 
 
 @mcp.tool()
-def get_energy_consumption(site_identifier: str, days: int = 7) -> Dict[str, Any]:
+def get_energy_consumption(
+        site_identifier: str,
+        days: int = 7,
+        auth_token: Optional[str] = None
+) -> Dict[str, Any]:
     """Get energy consumption for a site.
     Args:
         site_identifier: Site name (e.g. "Marcus Test", "Mugeesh Site") OR site ID
         days: Number of days to look back (default 7). Use 0 for today only.
+        :param days:
+        :param site_identifier:
+        :param auth_token:
     """
-    sm = get_site_lookup()
+    sm = get_site_lookup(auth_token=auth_token)
 
     # Use your existing smart lookup
     site_id = sm.find_site_id(site_identifier)
@@ -108,18 +113,18 @@ def get_energy_consumption(site_identifier: str, days: int = 7) -> Dict[str, Any
 
 
 @mcp.tool()
-def list_all_users() -> List[Dict]:
+def list_all_users(auth_token: Optional[str] = None) -> List[Dict]:
     """Return all available Energybox users with basic info.
     Use this when the user asks to see all sites or doesn't know the exact name."""
-    sm = get_user_lookup()
+    sm = get_user_lookup(auth_token)
     return sm.list_all_users()
 
 
 @mcp.tool()
-def search_users(query: str) -> List[Dict]:
+def search_users(query: str, auth_token: Optional[str] = None) -> List[Dict]:
     """Search for users by name, partial name, or ID.
     Returns matching users with name and ID. Use when the exact name is unclear."""
-    sm = get_user_lookup()
+    sm = get_user_lookup(auth_token)
     users = sm.list_all_users()
     query = query.lower().strip()
 
@@ -133,21 +138,21 @@ def search_users(query: str) -> List[Dict]:
 
 
 @mcp.tool()
-def get_user_details(user_identifier: str) -> Dict:
+def get_user_details(user_identifier: str, auth_token: Optional[str] = None) -> Dict:
     """Get full details of a user (name, email, position, contacts , role etc.)."""
-    user_memory = get_user_lookup()
+    user_memory = get_user_lookup(auth_token)
     site_id = user_memory.find_user_id(user_identifier)
     if not site_id:
         return {"error": "User not found"}
     return user_memory.get_user_details(site_id) or {"error": "Details not available"}
 
 
-def get_user_lookup() -> UserLookUp:
+def get_user_lookup(auth_token: Optional[str] = None) -> UserLookUp:
     """Lazy initialization so the server starts instantly."""
     global user_lookup
     if user_lookup is None:
-        logger.info("Initializing UserLookUp...")
-        user_lookup = UserLookUp()
+        logger.info(f"Initializing UserLookUp...{auth_token}")
+        user_lookup = UserLookUp(auth_token)
     return user_lookup
 
 

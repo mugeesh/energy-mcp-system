@@ -42,6 +42,7 @@ class EnergyMCPAgent:
         self.ollama_tools: List[Dict] = []
         self.messages: List[Dict] = []
         self._connected = False
+        self.current_token = None
         self.max_history = int(os.getenv("MCP_MAX_HISTORY", 12))
 
     async def __aenter__(self):
@@ -57,11 +58,13 @@ class EnergyMCPAgent:
             return
 
         logger.info("🔌 Connecting to MCP Server...")
-
+        process_env = os.environ.copy()
+        if hasattr(self, 'current_token') and self.current_token:
+            process_env["AUTH_TOKEN"] = self.current_token
         server_params = StdioServerParameters(
             command="uv",
             args=["--directory", MCP_SERVER_PATH, "run", "server.py"],
-            env=None,
+            env=process_env,
         )
 
         # Proper async context management
@@ -80,33 +83,49 @@ class EnergyMCPAgent:
         tools_response = await self.session.list_tools()
         self.ollama_tools = [self._mcp_tool_to_ollama(t) for t in tools_response.tools]
         # Initialize conversation with system prompt
-        self.messages = [
-            {
-                "role": "system",
-                "content": (
-                    "You are a helpful energy data assistant. or site information or User information "
-                    "Use the available tools to answer questions about sites information or energy consumption or User information. if user asked for consumption or if user asked some users details  "
-                    "Be concise, accurate, and professional. "
-                    "If you need information, call the appropriate tool."
-                ),
-            }
-        ]
+        # self.messages = [
+        #     {
+        #         "role": "system",
+        #         "content": (
+        #             "You are a helpful energy data assistant. or site information or User information "
+        #             "Use the available tools to answer questions about sites information or energy consumption or User information. if user asked for consumption or if user asked some users details  "
+        #             "Be concise, accurate, and professional. "
+        #             "If you need information, call the appropriate tool."
+        #         ),
+        #     }
+        # ]
 
         self._connected = True
         logger.info(f"✅ Connected. Loaded {len(self.ollama_tools)} MCP tools.")
 
     def _mcp_tool_to_ollama(self, mcp_tool) -> Dict:
-        """Convert MCP Tool object → Ollama tool schema (critical fix)"""
-        return {
+        """Convert MCP Tool object → Ollama-compatible tool schema.
+
+        Important: We deliberately hide 'auth_token' so the LLM cannot see or hallucinate it.
+        The token is injected automatically on the backend.
+        """
+        schema = {
             "type": "function",
             "function": {
                 "name": mcp_tool.name,
-                "description": mcp_tool.description
-                or f"Execute the {mcp_tool.name} tool",
-                "parameters": mcp_tool.inputSchema
-                or {"type": "object", "properties": {}, "required": []},
+                "description": mcp_tool.description or f"Execute the {mcp_tool.name} tool",
+                "parameters": mcp_tool.inputSchema or {
+                    "type": "object",
+                    "properties": {},
+                    "required": []
+                },
             },
         }
+        # === SECURITY: Remove auth_token from schema ===
+        params = schema["function"].get("parameters", {})
+        properties = params.get("properties", {})
+        required = params.get("required", [])
+
+        if "auth_token" in properties:
+            del properties["auth_token"]
+        if "auth_token" in required:
+            required.remove("auth_token")
+        return schema
 
     async def _call_tool(self, tool_name: str, arguments: Dict[str, Any]) -> Any:
         """Execute MCP tool and return clean result."""
@@ -121,7 +140,7 @@ class EnergyMCPAgent:
             # Best practice result parsing
             if result.structuredContent:
                 return (
-                    result.structuredContent.get("result") or result.structuredContent
+                        result.structuredContent.get("result") or result.structuredContent
                 )
 
             if result.content:
@@ -143,65 +162,99 @@ class EnergyMCPAgent:
             logger.error(f"Tool call failed [{tool_name}]: {e}")
             return {"error": str(e)}
 
-    async def chat(self, user_query: str) -> str:
-        """Single turn chat with tool calling support."""
+    async def chat(
+            self,
+            user_query: str,
+            history: Optional[List[Dict]] = None,
+            token: Optional[str] = None
+    ) -> str:
+        """Per-request stateless chat – no global history pollution"""
+        self.current_token = token
+
         if not self._connected:
             await self.connect()
 
-        self._trim_history()
-        # Add user message
-        self.messages.append({"role": "user", "content": user_query})
+        # === Build fresh conversation for THIS request only ===
+        messages: List[Dict] = [
+            {
+                "role": "system",
+                "content": (
+                    "You are a helpful energy data assistant. "
+                    "Use the available tools to answer questions about sites information "
+                    "or energy consumption or User information. "
+                    "Be concise, accurate, and professional. "
+                    "If you need information, call the appropriate tool."
+                ),
+            }
+        ]
+
+        if history:
+            messages.extend(history)
+        messages.append({"role": "user", "content": user_query})
+
+        # Trim history for this request
+        self._trim_history(messages)
 
         max_steps = 8
         for step in range(max_steps):
-            logger.info(f"\n Thinking (step {step + 1})...")
-            logger.info(f"all messages : {self.messages}")
+            logger.info(f"Thinking (step {step + 1})...")
 
             response = ollama.chat(
-                model=OLLAMA_MODEL, messages=self.messages, tools=self.ollama_tools
+                model=OLLAMA_MODEL,
+                messages=messages,  # ← local messages
+                tools=self.ollama_tools
             )
             message = response["message"]
+            logger.debug(f"current ai message: {message}")
+            messages.append(message)
 
-            logger.info(f"current message : {message}")
-            # Save assistant response
-            self.messages.append(message)
-
-            # No tool calls → final answer
             if not message.get("tool_calls"):
                 final_content = message.get("content", "No response generated.")
-                logger.debug("\n" + "═" * 70)
-                logger.debug("✅ Answer:")
-                logger.debug(final_content)
-                logger.debug("═" * 70)
+                logger.debug("✅ Final Answer:\n" + final_content)
                 return final_content
 
-            # Handle tool calls
+            # Tool calls
             for tool_call in message.get("tool_calls", []):
                 tool_name = tool_call["function"]["name"]
-                logger.info(f"Calling tool_name: {tool_name}")
                 try:
-                    arguments = tool_call["function"]["arguments"]
-                    logger.info(f"Calling arguments: {arguments}")
+                    arguments = tool_call["function"].get("arguments", {})
+                    logger.debug(f"current ai arguments: {arguments}")
                     if isinstance(arguments, str):
                         arguments = json.loads(arguments)
-                except:
+                except Exception:
                     arguments = {}
 
-                logger.info(f"   → Using tool: {tool_name}({arguments})")
-                logger.info("\n ======================")
-                tool_result = await self._call_tool(tool_name, arguments)
+                # Secure token injection
+                tool_arguments = dict(arguments)
+                if token:
+                    tool_arguments["auth_token"] = token
 
-                # Add tool response back to conversation
-                self.messages.append(
-                    {
-                        "role": "tool",
-                        "content": json.dumps(tool_result, ensure_ascii=False),
-                        "tool_call_id": tool_call.get("id"),
-                    }
-                )
+                logger.info(f"   → Calling tool: {tool_name}")
 
-        print("⚠️ Max steps reached.")
+                tool_result = await self._call_tool(tool_name, tool_arguments)
+
+                # Add tool result to this request's history
+                messages.append({
+                    "role": "tool",
+                    "content": json.dumps(tool_result, ensure_ascii=False),
+                    "tool_call_id": tool_call.get("id"),
+                })
+
+        logger.warning("⚠️ Max steps reached.")
         return "Sorry, I couldn't complete the request after multiple steps."
+
+    def _trim_history(self, messages: List[Dict]):
+        """Trim in-place: keep system prompt + recent messages."""
+        if len(messages) <= self.max_history:
+            return
+
+        system_prompt = next((msg for msg in messages if msg.get("role") == "system"), None)
+        if system_prompt is None:
+            system_prompt = {"role": "system", "content": "You are a helpful assistant."}
+
+        # Keep system + last (max_history - 1) messages
+        messages[:] = [system_prompt] + messages[-(self.max_history - 1):]
+        logger.debug(f"History trimmed to {len(messages)} messages")
 
     async def close(self) -> None:
         """Clean shutdown."""
@@ -210,18 +263,8 @@ class EnergyMCPAgent:
         self._connected = False
         logger.info("👋 Energy MCP Agent shutdown.")
 
-    def _trim_history(self):
-        """Keep only recent messages + system prompt"""
-        if len(self.messages) <= self.max_history:
-            return
-        # Always keep system prompt (index 0)
-        system_prompt = self.messages[0]
-        # Keep last (max_history - 1) messages
-        self.messages = [system_prompt] + self.messages[-(self.max_history - 1) :]
-        logger.debug(f"History trimmed to {len(self.messages)} messages")
-
     async def clear_all_history(self):
-        self.messages: List[Dict] = []
+        messages: List[Dict] = []
         return {"status": "Done"}
 
 

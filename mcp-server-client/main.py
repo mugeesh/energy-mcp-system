@@ -2,12 +2,12 @@
 from contextlib import asynccontextmanager
 from typing import Dict, List, Optional
 import uvicorn
-from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi import FastAPI, HTTPException, Request
 from pydantic import BaseModel
+import logging
+from mcp_client.client import EnergyMCPAgent
 
-from mcp_client.client import \
-    EnergyMCPAgent  # Adjust import if your path is different
 
 # Global agent instance
 agent: Optional[EnergyMCPAgent] = None
@@ -63,21 +63,38 @@ class HealthResponse(BaseModel):
 
 
 @app.post("/chat", response_model=ChatResponse)
-async def chat(request: ChatRequest):
+async def chat(payload: ChatRequest, request: Request):
     if not agent:
         raise HTTPException(status_code=503, detail="Agent is not initialized yet")
 
     try:
-        final_content = await agent.chat(request.message)
+        # Robust Bearer token extraction
+        auth_header = request.headers.get("Authorization", "")
+        jwt_token = None
+        if auth_header.startswith("Bearer "):
+            jwt_token = auth_header[7:].strip()
+        elif auth_header:
+            jwt_token = auth_header.strip()
+
+        if jwt_token:
+            logging.info(f"Received request with token (length: {len(jwt_token)})")
+        else:
+            logging.warning("Request received without Authorization header")
+
+        final_content = await agent.chat(
+            user_query=payload.message,
+            history=payload.history,
+            token=jwt_token
+        )
 
         return ChatResponse(
             content=final_content,
-            toolCalls=[],  # TODO: Enhance later to return actual tool calls
+            toolCalls=[]
         )
 
     except Exception as e:
-        print(f"Error in /chat endpoint: {e}")
-        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
+        logging.error(f"Error in /chat endpoint: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail="Internal server error")
 
 
 @app.get("/health", response_model=HealthResponse)

@@ -21,11 +21,13 @@ logger = logging.getLogger(__name__)
 
 
 class UserLookUp:
-    def __init__(self):
+    def __init__(self, auth_token=None):
         self.last_fetch = None
         self.users_cache = None
         self.user_lookup = {}
-        self.iam_client = IAMClient()
+        self.iam_client = IAMClient(auth_token)   # ← This is key
+        logger.info(f"UserLookUp initialized with token (len: {len(self.iam_client.token) if self.iam_client.token else 0})")
+        self.load_users()
         self.ts_api = TSApi(self.iam_client.token)
         self.load_users()
 

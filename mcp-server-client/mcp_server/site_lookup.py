@@ -21,13 +21,14 @@ logger = logging.getLogger(__name__)
 
 
 class SiteLookUp:
-    def __init__(self):
+    def __init__(self, auth_token=None):
         self.sites_cache = None
         self.site_lookup = {}
         self.last_fetch = None
-        self.iam_client = IAMClient()
+        self.iam_client = IAMClient(auth_token)
+        logger.info(f"SiteLookUp initialized with token (len: {len(self.iam_client.token) if getattr(self.iam_client, 'token', None) else 0})")
         self.ts_api = TSApi(self.iam_client.token)
-        self.load_sites()
+        self.load_sites()   # Load only once
 
     def load_sites(self, force_refresh=False):
         """Load all sites from Energybox API"""
@@ -175,8 +176,8 @@ if __name__ == "__main__":
     # List sites
     sites = sm.list_all_sites()
     print(f"\nFound {len(sites)} sites:")
-    for site in sites[:5]:  # Show first 5
-        print(f"  - {site['title']} (ID: {site['id']})")
+    for site_info in sites[:5]:  # Show first 5
+        print(f"  - {site_info['title']} (ID: {site_info['id']})")
 
     # Test finding a site
     test_site = "E2E Validation-flagged-breakers"
