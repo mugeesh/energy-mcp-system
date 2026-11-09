@@ -299,6 +299,15 @@ class EnergyMCPAgent:
         messages[:] = [system_prompt] + messages[-(self.max_history - 1):]
         logger.debug("History trimmed to %d messages", len(messages))
 
+    async def clear_all_history(self) -> Dict[str, Any]:
+        """No-op kept for API compatibility.
+
+        Chat history is supplied by the client on every request, so the agent
+        holds no conversation state to clear.
+        """
+        self.messages.clear()
+        return {"status": "Done", "cleared": 0}
+
     async def close(self) -> None:
         """Clean shutdown."""
         if self.exit_stack:
