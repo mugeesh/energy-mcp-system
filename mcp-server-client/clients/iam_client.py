@@ -1,12 +1,8 @@
-import json
 import logging
 import os
 
 import requests
 from dotenv import load_dotenv
-
-logger = logging.getLogger()
-logger.setLevel(logging.DEBUG)
 
 load_dotenv()
 logger = logging.getLogger(__name__)
@@ -16,56 +12,35 @@ logging.basicConfig(
 
 
 class IAMClient:
+    """IAM API client using the caller's JWT.
+
+    The frontend sends ``Authorization: Bearer <token>`` on every request; the
+    client injects it into MCP tool calls. No username/password login is used.
+    """
 
     def __init__(self, auth_token=None):
         self.base_url = os.getenv("IAM_URL")
-        self.username = os.getenv("IAM_USERNAME")
-        self.password = os.getenv("IAM_PASSWORD")
-        if auth_token:
-            token_str = auth_token.strip()
-            if not token_str.startswith("Bearer "):
-                self.token = "Bearer " + token_str
-            else:
-                self.token = token_str
-            logger.info(f"IAMClient: Using provided JWT token (len: {len(self.token)})")
-        else:
-            logger.info("IAMClient: No token provided → logging in with credentials")
-            self.token = self.get_token_iam()
-        logger.debug(f"Final Authorization header will be: {self.token[:80]}...")
+        if not self.base_url:
+            raise ValueError("IAM_URL is not configured")
 
-    def get_token_iam(self):
-        """Only used when no token is passed from frontend"""
-        try:
-            headers = {"Content-Type": "application/json"}
-            payload = {"email": self.username, "password": self.password}
-
-            response = requests.post(
-                f"{self.base_url}/auth/login",
-                json=payload,
-                headers=headers,
-                timeout=15
+        token = (auth_token or os.getenv("AUTH_TOKEN") or "").strip()
+        if not token:
+            raise ValueError(
+                "No IAM token supplied. The frontend must send "
+                "'Authorization: Bearer <token>' with every /chat request."
             )
-            response.raise_for_status()
 
-            access_token = response.json().get("accessToken")
-            if not access_token:
-                raise ValueError("Login response did not contain accessToken")
-
-            return "Bearer " + access_token
-
-        except Exception as e:
-            logger.error(f"Failed to get token via login: {e}")
-            raise
+        if not token.startswith("Bearer "):
+            token = "Bearer " + token
+        self.token = token
+        logger.info("IAMClient: using caller JWT (len: %d)", len(self.token))
 
     def get_headers(self):
-        if not getattr(self, 'token', None):
-            raise ValueError("No authentication token available in IAMClient")
         return {
             "Content-Type": "application/json",
-            "authorization": self.token
+            "authorization": self.token,
         }
 
-    # Your other methods stay almost the same
     def get_all_users(self):
         try:
             response = requests.get(
@@ -74,12 +49,15 @@ class IAMClient:
                 timeout=30,
             )
             response.raise_for_status()
-            logger.info(f"✅ get_all_users succeeded: {len(response.json())} users returned")
+            logger.info(
+                "✅ get_all_users succeeded: %d users returned",
+                len(response.json()),
+            )
             return response
         except Exception as e:
-            logger.error(f"❌ get_all_users failed: {e}")
-            if hasattr(e, 'response') and e.response is not None:
-                logger.error(f"Response body: {e.response.text}")
+            logger.error("❌ get_all_users failed: %s", e)
+            if hasattr(e, "response") and e.response is not None:
+                logger.error("Response body: %s", e.response.text)
             raise
 
     def get_all_sites(self):
@@ -91,10 +69,13 @@ class IAMClient:
                 timeout=30,
             )
             response.raise_for_status()
-            logger.info(f"✅ get_all_sites succeeded: {len(response.json())} users returned")
+            logger.info(
+                "✅ get_all_sites succeeded: %d sites returned",
+                len(response.json()),
+            )
             return response
         except Exception as e:
-            logger.error(f"❌ get_all_users failed: {e}")
-            if hasattr(e, 'response') and e.response is not None:
-                logger.error(f"Response body: {e.response.text}")
+            logger.error("❌ get_all_sites failed: %s", e)
+            if hasattr(e, "response") and e.response is not None:
+                logger.error("Response body: %s", e.response.text)
             raise

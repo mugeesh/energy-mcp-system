@@ -11,7 +11,7 @@ async def list_tools():
     server_params = StdioServerParameters(
         command="uv",
         args=["run", "server.py"],
-        cwd="/Users/mugeesh/git2/POC/MCP/energy-mcp-system/mcp-server",
+        cwd="/Users/mugeesh/git2/energy-mcp-system/mcp-server-client/mcp_server",
     )
 
     async with stdio_client(server_params) as (read, write):

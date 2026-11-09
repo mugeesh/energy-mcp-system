@@ -25,9 +25,8 @@ class UserLookUp:
         self.last_fetch = None
         self.users_cache = None
         self.user_lookup = {}
-        self.iam_client = IAMClient(auth_token)   # ← This is key
+        self.iam_client = IAMClient(auth_token)
         logger.info(f"UserLookUp initialized with token (len: {len(self.iam_client.token) if self.iam_client.token else 0})")
-        self.load_users()
         self.ts_api = TSApi(self.iam_client.token)
         self.load_users()
 
@@ -82,7 +81,7 @@ class UserLookUp:
         # Try partial match
         for title, user_id in self.user_lookup.items():
             if username_lower in title or title in username_lower:
-                return eb_user_id
+                return user_id
 
         # Try to match by ID if numeric
         if username.isdigit():

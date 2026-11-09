@@ -28,7 +28,7 @@ export default function Sidebar({
                 </div>
                 <div>
                     <h1 className="text-2xl font-bold text-slate-900">EnergyInsight</h1>
-                    <p className="text-emerald-600 text-sm">MCP + Ollama Agent</p>
+                    <p className="text-emerald-600 text-sm">MCP + DeepSeek Agent</p>
                 </div>
             </div>
 

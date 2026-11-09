@@ -1,0 +1,13 @@
+.git
+.gitignore
+.idea
+.venv
+.env
+.env.*
+!.env.example
+__pycache__
+*.py[cod]
+*.log
+.DS_Store
+.pytest_cache
+.ruff_cache

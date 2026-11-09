@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 """
-Clean Energy MCP Agent with Ollama (Best Practice 2026)
+IAM / Energy MCP Agent backed by DeepSeek.
 
-- Proper async resource management
-- Full conversation history
-- Robust tool calling loop
-- Clean separation between MCP client and Ollama agent logic
+- Connects to the MCP server over stdio (default) or streamable HTTP
+- Uses DeepSeek's OpenAI-compatible chat completions API for tool calling
+- Injects the caller's JWT into MCP tool calls on the backend (never shown to the LLM)
+- Keeps each /chat request stateless
 """
 
 import asyncio
@@ -13,37 +13,49 @@ import json
 import logging
 import os
 from contextlib import AsyncExitStack
+from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 from dotenv import load_dotenv
 from mcp import ClientSession, StdioServerParameters
 from mcp.client.stdio import stdio_client
 from mcp.types import CallToolResult
-
-import ollama
+from openai import AsyncOpenAI
 
 load_dotenv()
+
 # ========================= CONFIG =========================
-MCP_SERVER_PATH = os.getenv("MCP_SERVER_PATH")
-OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "qwen3:1.7b")
+_PROJECT_ROOT = Path(__file__).resolve().parents[1]
+
+# MCP transport: "stdio" (spawn server.py locally) or "streamable-http" (URL).
+MCP_TRANSPORT = os.getenv("MCP_TRANSPORT", "stdio").strip().lower()
+MCP_SERVER_PATH = os.getenv("MCP_SERVER_PATH", str(_PROJECT_ROOT / "mcp_server"))
+MCP_SERVER_URL = os.getenv("MCP_SERVER_URL", "http://127.0.0.1:8001/mcp")
+
+# DeepSeek (OpenAI-compatible API)
+DEEPSEEK_API_KEY = os.getenv("DEEPSEEK_API_KEY")
+DEEPSEEK_BASE_URL = os.getenv("DEEPSEEK_BASE_URL", "https://api.deepseek.com")
+DEEPSEEK_MODEL = os.getenv("DEEPSEEK_MODEL", "deepseek-chat")
+DEEPSEEK_TEMPERATURE = float(os.getenv("DEEPSEEK_TEMPERATURE", "0.2"))
 
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
-logger = logging.getLogger("EnergyMCPAgent")
+logger = logging.getLogger("IAMMCPAgent")
 
 
 class EnergyMCPAgent:
-    """Clean MCP + Ollama Agent following best practices."""
+    """MCP + DeepSeek agent (kept as ``EnergyMCPAgent`` for API compatibility)."""
 
     def __init__(self):
         self.session: Optional[ClientSession] = None
         self.exit_stack = AsyncExitStack()
-        self.ollama_tools: List[Dict] = []
+        self.tools: List[Dict] = []
         self.messages: List[Dict] = []
         self._connected = False
-        self.current_token = None
+        self.current_token: Optional[str] = None
         self.max_history = int(os.getenv("MCP_MAX_HISTORY", 12))
+        self._llm: Optional[AsyncOpenAI] = None
 
     async def __aenter__(self):
         await self.connect()
@@ -52,71 +64,81 @@ class EnergyMCPAgent:
     async def __aexit__(self, exc_type, exc_val, exc_tb):
         await self.close()
 
+    # ------------------------------------------------------------------
+    # LLM
+    # ------------------------------------------------------------------
+    def _llm_client(self) -> AsyncOpenAI:
+        if self._llm is None:
+            if not DEEPSEEK_API_KEY:
+                raise RuntimeError(
+                    "DEEPSEEK_API_KEY is not set. Add it to the environment or .env file."
+                )
+            self._llm = AsyncOpenAI(
+                api_key=DEEPSEEK_API_KEY,
+                base_url=DEEPSEEK_BASE_URL,
+            )
+        return self._llm
+
+    # ------------------------------------------------------------------
+    # MCP connection
+    # ------------------------------------------------------------------
     async def connect(self) -> None:
-        """Connect to MCP server and load tools."""
+        """Connect to the MCP server and load its tools."""
         if self._connected:
             return
 
-        logger.info("🔌 Connecting to MCP Server...")
-        process_env = os.environ.copy()
-        if hasattr(self, 'current_token') and self.current_token:
-            process_env["AUTH_TOKEN"] = self.current_token
-        server_params = StdioServerParameters(
-            command="uv",
-            args=["--directory", MCP_SERVER_PATH, "run", "server.py"],
-            env=process_env,
-        )
-
-        # Proper async context management
-        stdio_transport = await self.exit_stack.enter_async_context(
-            stdio_client(server_params)
-        )
-        read, write = stdio_transport
+        logger.info("🔌 Connecting to MCP Server (%s)...", MCP_TRANSPORT)
+        read, write = await self._open_transport()
 
         self.session = await self.exit_stack.enter_async_context(
             ClientSession(read, write)
         )
-
         await self.session.initialize()
 
-        # Load tools once
         tools_response = await self.session.list_tools()
-        self.ollama_tools = [self._mcp_tool_to_ollama(t) for t in tools_response.tools]
-        # Initialize conversation with system prompt
-        # self.messages = [
-        #     {
-        #         "role": "system",
-        #         "content": (
-        #             "You are a helpful energy data assistant. or site information or User information "
-        #             "Use the available tools to answer questions about sites information or energy consumption or User information. if user asked for consumption or if user asked some users details  "
-        #             "Be concise, accurate, and professional. "
-        #             "If you need information, call the appropriate tool."
-        #         ),
-        #     }
-        # ]
+        self.tools = [self._mcp_tool_to_openai(t) for t in tools_response.tools]
 
         self._connected = True
-        logger.info(f"✅ Connected. Loaded {len(self.ollama_tools)} MCP tools.")
+        logger.info("✅ Connected. Loaded %d MCP tools.", len(self.tools))
 
-    def _mcp_tool_to_ollama(self, mcp_tool) -> Dict:
-        """Convert MCP Tool object → Ollama-compatible tool schema.
+    async def _open_transport(self):
+        """Return (read, write) for the configured MCP transport."""
+        if MCP_TRANSPORT in {"http", "streamable-http", "streamable_http"}:
+            from mcp.client.streamable_http import streamablehttp_client
 
-        Important: We deliberately hide 'auth_token' so the LLM cannot see or hallucinate it.
-        The token is injected automatically on the backend.
+            transport = await self.exit_stack.enter_async_context(
+                streamablehttp_client(MCP_SERVER_URL)
+            )
+            # streamablehttp_client yields (read, write, get_session_id)
+            return transport[0], transport[1]
+
+        process_env = os.environ.copy()
+        if self.current_token:
+            process_env["AUTH_TOKEN"] = self.current_token
+
+        server_params = StdioServerParameters(
+            command=os.getenv("MCP_SERVER_COMMAND", "uv"),
+            args=["--directory", MCP_SERVER_PATH, "run", "server.py"],
+            env=process_env,
+        )
+        return await self.exit_stack.enter_async_context(stdio_client(server_params))
+
+    def _mcp_tool_to_openai(self, mcp_tool) -> Dict:
+        """Convert an MCP tool into an OpenAI/DeepSeek function schema.
+
+        ``auth_token`` is deliberately hidden from the LLM; it is injected on the
+        backend for every tool call.
         """
         schema = {
             "type": "function",
             "function": {
                 "name": mcp_tool.name,
-                "description": mcp_tool.description or f"Execute the {mcp_tool.name} tool",
-                "parameters": mcp_tool.inputSchema or {
-                    "type": "object",
-                    "properties": {},
-                    "required": []
-                },
+                "description": mcp_tool.description
+                or f"Execute the {mcp_tool.name} tool",
+                "parameters": mcp_tool.inputSchema
+                or {"type": "object", "properties": {}, "required": []},
             },
         }
-        # === SECURITY: Remove auth_token from schema ===
         params = schema["function"].get("parameters", {})
         properties = params.get("properties", {})
         required = params.get("required", [])
@@ -128,7 +150,7 @@ class EnergyMCPAgent:
         return schema
 
     async def _call_tool(self, tool_name: str, arguments: Dict[str, Any]) -> Any:
-        """Execute MCP tool and return clean result."""
+        """Execute an MCP tool and return a clean Python/JSON result."""
         if not self.session:
             await self.connect()
 
@@ -137,51 +159,55 @@ class EnergyMCPAgent:
                 name=tool_name, arguments=arguments
             )
 
-            # Best practice result parsing
             if result.structuredContent:
                 return (
-                        result.structuredContent.get("result") or result.structuredContent
+                    result.structuredContent.get("result")
+                    or result.structuredContent
                 )
 
             if result.content:
                 texts = [
-                    b.text.strip()
-                    for b in result.content
-                    if hasattr(b, "text") and b.text
+                    block.text.strip()
+                    for block in result.content
+                    if hasattr(block, "text") and block.text
                 ]
                 if len(texts) == 1:
                     try:
                         return json.loads(texts[0])
                     except (json.JSONDecodeError, TypeError):
                         return texts[0]
-                # Multiple items
-                return [json.loads(t) if t.startswith("{") else t for t in texts]
+                return [
+                    json.loads(text) if text.startswith("{") else text
+                    for text in texts
+                ]
             return None
 
-        except Exception as e:
-            logger.error(f"Tool call failed [{tool_name}]: {e}")
-            return {"error": str(e)}
+        except Exception as exc:  # noqa: BLE001 - surface error to the LLM
+            logger.error("Tool call failed [%s]: %s", tool_name, exc)
+            return {"error": str(exc)}
 
+    # ------------------------------------------------------------------
+    # Chat
+    # ------------------------------------------------------------------
     async def chat(
-            self,
-            user_query: str,
-            history: Optional[List[Dict]] = None,
-            token: Optional[str] = None
+        self,
+        user_query: str,
+        history: Optional[List[Dict]] = None,
+        token: Optional[str] = None,
     ) -> str:
-        """Per-request stateless chat – no global history pollution"""
+        """Per-request stateless chat — no global history pollution."""
         self.current_token = token
 
         if not self._connected:
             await self.connect()
 
-        # === Build fresh conversation for THIS request only ===
         messages: List[Dict] = [
             {
                 "role": "system",
                 "content": (
-                    "You are a helpful energy data assistant. "
-                    "Use the available tools to answer questions about sites information "
-                    "or energy consumption or User information. "
+                    "You are a helpful IAM and energy data assistant. "
+                    "Use the available tools to answer questions about sites, "
+                    "energy consumption and users. "
                     "Be concise, accurate, and professional. "
                     "If you need information, call the appropriate tool."
                 ),
@@ -191,99 +217,108 @@ class EnergyMCPAgent:
         if history:
             messages.extend(history)
         messages.append({"role": "user", "content": user_query})
-
-        # Trim history for this request
         self._trim_history(messages)
 
-        max_steps = 8
+        max_steps = int(os.getenv("MCP_MAX_STEPS", 8))
+        llm = self._llm_client()
+
         for step in range(max_steps):
-            logger.info(f"Thinking (step {step + 1})...")
+            logger.info("Thinking (step %d)...", step + 1)
 
-            response = ollama.chat(
-                model=OLLAMA_MODEL,
-                messages=messages,  # ← local messages
-                tools=self.ollama_tools
+            response = await llm.chat.completions.create(
+                model=DEEPSEEK_MODEL,
+                messages=messages,
+                tools=self.tools or None,
+                temperature=DEEPSEEK_TEMPERATURE,
             )
-            message = response["message"]
-            logger.debug(f"current ai message: {message}")
-            messages.append(message)
+            message = response.choices[0].message
+            tool_calls = message.tool_calls or []
 
-            if not message.get("tool_calls"):
-                final_content = message.get("content", "No response generated.")
-                logger.debug("✅ Final Answer:\n" + final_content)
+            assistant_message: Dict[str, Any] = {
+                "role": "assistant",
+                "content": message.content or "",
+            }
+            if tool_calls:
+                assistant_message["tool_calls"] = [
+                    {
+                        "id": call.id,
+                        "type": "function",
+                        "function": {
+                            "name": call.function.name,
+                            "arguments": call.function.arguments,
+                        },
+                    }
+                    for call in tool_calls
+                ]
+            messages.append(assistant_message)
+
+            if not tool_calls:
+                final_content = message.content or "No response generated."
+                logger.debug("✅ Final Answer:\n%s", final_content)
                 return final_content
 
-            # Tool calls
-            for tool_call in message.get("tool_calls", []):
-                tool_name = tool_call["function"]["name"]
+            for tool_call in tool_calls:
+                tool_name = tool_call.function.name
                 try:
-                    arguments = tool_call["function"].get("arguments", {})
-                    logger.debug(f"current ai arguments: {arguments}")
-                    if isinstance(arguments, str):
-                        arguments = json.loads(arguments)
-                except Exception:
+                    arguments = json.loads(tool_call.function.arguments or "{}")
+                except (json.JSONDecodeError, TypeError):
+                    arguments = {}
+                if not isinstance(arguments, dict):
                     arguments = {}
 
-                # Secure token injection
+                # Secure token injection: the LLM never sees or supplies this.
                 tool_arguments = dict(arguments)
                 if token:
                     tool_arguments["auth_token"] = token
 
-                logger.info(f"   → Calling tool: {tool_name}")
-
+                logger.info("   → Calling tool: %s", tool_name)
                 tool_result = await self._call_tool(tool_name, tool_arguments)
 
-                # Add tool result to this request's history
-                messages.append({
-                    "role": "tool",
-                    "content": json.dumps(tool_result, ensure_ascii=False),
-                    "tool_call_id": tool_call.get("id"),
-                })
+                messages.append(
+                    {
+                        "role": "tool",
+                        "tool_call_id": tool_call.id,
+                        "content": json.dumps(tool_result, ensure_ascii=False),
+                    }
+                )
 
         logger.warning("⚠️ Max steps reached.")
         return "Sorry, I couldn't complete the request after multiple steps."
 
-    def _trim_history(self, messages: List[Dict]):
-        """Trim in-place: keep system prompt + recent messages."""
+    def _trim_history(self, messages: List[Dict]) -> None:
+        """Trim in-place: keep the system prompt plus recent messages."""
         if len(messages) <= self.max_history:
             return
 
-        system_prompt = next((msg for msg in messages if msg.get("role") == "system"), None)
+        system_prompt = next(
+            (msg for msg in messages if msg.get("role") == "system"), None
+        )
         if system_prompt is None:
             system_prompt = {"role": "system", "content": "You are a helpful assistant."}
 
-        # Keep system + last (max_history - 1) messages
         messages[:] = [system_prompt] + messages[-(self.max_history - 1):]
-        logger.debug(f"History trimmed to {len(messages)} messages")
+        logger.debug("History trimmed to %d messages", len(messages))
 
     async def close(self) -> None:
         """Clean shutdown."""
         if self.exit_stack:
             await self.exit_stack.aclose()
+        if self._llm is not None:
+            await self._llm.close()
         self._connected = False
-        logger.info("👋 Energy MCP Agent shutdown.")
-
-    async def clear_all_history(self):
-        messages: List[Dict] = []
-        return {"status": "Done"}
+        logger.info("👋 IAM MCP Agent shutdown.")
 
 
 # ====================== Interactive Mode ======================
 async def main():
     async with EnergyMCPAgent() as agent:
         print("\n" + "═" * 80)
-        print("⚡ ENERGY AI AGENT  →  Ollama + MCP (Clean Best Practice)")
+        print("⚡ IAM / ENERGY AI AGENT  →  DeepSeek + MCP")
         print("═" * 80)
         print("Examples:")
-        print("   • What is the energy consumption of Mugeesh Site last 10 days?")
-        print("   • Show energy for E2E Validation-flagged-breakers")
-        print(
-            "   • can you give energy consumption for the Validation-flagged-breakers site last 8 days"
-        )
         print("   • List all sites")
-        print("   • === OR ====")
-        print("   • List all User")
-        print("who is mugeesh husain")
+        print("   • Show energy for Mugeesh Site last 10 days")
+        print("   • Who is mugeesh husain?")
         print("Type 'quit' to exit.\n")
 
         while True:
@@ -292,11 +327,12 @@ async def main():
                 if query.lower() in ["quit", "exit", "bye", "q"]:
                     break
                 if query:
-                    await agent.chat(query)
+                    reply = await agent.chat(query, token=os.getenv("AUTH_TOKEN"))
+                    print("\nAssistant:", reply, "\n")
             except KeyboardInterrupt:
                 break
-            except Exception as e:
-                logger.error(f"Error: {e}")
+            except Exception as exc:  # noqa: BLE001
+                logger.error("Error: %s", exc, exc_info=True)
 
     print("\nGoodbye!")
 

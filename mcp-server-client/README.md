@@ -1,95 +1,75 @@
-setup steps
+# mcp-server-client
 
-1. uv init
-2. uv venv
-3. source .venv/bin/activate
-4. uv add pika
-5. uv add pika requests
-6. uv add pika python-dotenv
-7. uv add mcp ollama
-8. uv add fastapi
-7. uv sync
+Python project containing the Energybox IAM MCP server and a DeepSeek-powered
+MCP client / FastAPI backend.
 
-### run on local PC
+## Setup
 
-1. uv run mcp-client/client.py
-2. uv run python -m mcp-server.server
-3. uv run ollama_api.py
+Requires Python 3.14+ and [uv](https://docs.astral.sh/uv/).
 
-###TEST
-
-
-📚 Next Steps
-Once this works, you can:
-
-Add PostgreSQL instead of JSON file
-
-Dockerize everything with docker-compose
-
-Add Ollama for natural language processing
-
-Build a web frontend
-
-#### curser Apps
-
-# MCP
-
-on visual studio code
-
+```bash
+cd mcp-server-client
+uv sync
 ```
-{
-    "servers": {
-        "energy-mcp": {
-            "command": "/usr/local/bin/uv",
-            "args": [
-                "--directory",
-                "/Users/mugeesh/git2/POC/MCP/energy-mcp-system/mcp-server",
-                "run",
-                "server.py"
-            ],
-            "env": {
-                "LOG_LEVEL": "debug"
-            }
-        }
-    }
-}
-check logs
-cd /Users/mugeesh/Library/Application Support/Code/logs/20260409T151803/window8
-tail -f mcpServer.mcp.config.usrlocal.energy-mcp.log
 
+Copy `../.env.example` to `../.env` and set `DEEPSEEK_API_KEY` plus the IAM
+values.
+
+## Run the FastAPI backend
+
+```bash
+uv run python main.py
+# or
+uv run uvicorn main:app --host 0.0.0.0 --port 8000 --reload
 ```
+
+Endpoints: `POST /chat`, `GET /health`, `GET /tools`, `POST /clear_history`.
+
+## Run the MCP server
+
+stdio (what the client spawns by default):
+
+```bash
+cd mcp_server
+uv run python server.py
 ```
+
+streamable HTTP:
+
+```bash
+MCP_TRANSPORT=streamable-http MCP_HTTP_HOST=0.0.0.0 MCP_HTTP_PORT=8001 \
+  uv run python server.py
+# endpoint: http://localhost:8001/mcp
+```
+
+## Run the interactive client
+
+```bash
+MCP_TRANSPORT=stdio uv run python -m mcp_client.client
+```
+
+## MCP client configuration (Cursor / OpenCode / Claude Desktop)
+
+```json
 {
   "mcpServers": {
-    "energy-mcp": {
-      "command": "/usr/local/bin/uv",
-      "args": [
-        "--directory",
-        "/Users/mugeesh/git2/POC/MCP/energy-mcp-system/mcp-server",
-        "run",
-        "server.py"
-      ]
+    "energybox": {
+      "command": "uv",
+      "args": ["--directory", "/Users/mugeesh/git2/iam-mcp/mcp-server-client/mcp_server", "run", "server.py"],
+      "env": {
+        "IAM_URL": "https://iam.staging.energybox.com",
+        "AUTH_TOKEN": "Bearer <token>"
+      }
     }
   }
 }
 ```
-# check logs
-```/Users/mugeesh/Library/Application Support/Cursor/logs/20260411T113943/window3/exthost/anysphere.cursor-mcp```
 
+## Environment
 
-### set ENV
-```
-RABBITMQ_HOST=localhost
-RABBITMQ_PORT=5672
-RABBITMQ_USER=admin
-RABBITMQ_PASS=password123
-TIKA_SERVER_URL=http://localhost:9998
-MY_API_KEY=sk-abc123xyz
-# IAM
-iam_username=
-iam_password=
-iam_url=
-# ts api
-ts_api_url=
+See [`../.env.example`](../.env.example). The important ones:
 
-```
+- `DEEPSEEK_API_KEY`, `DEEPSEEK_BASE_URL`, `DEEPSEEK_MODEL`
+- `MCP_TRANSPORT` (`stdio` / `streamable-http`), `MCP_SERVER_URL`
+- `IAM_URL`, `ts_api_url`
+- `AUTH_TOKEN` (local stdio only; HTTP uses the frontend Bearer token)

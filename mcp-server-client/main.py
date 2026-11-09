@@ -1,6 +1,7 @@
 # backend/app/main.py
 from contextlib import asynccontextmanager
 from typing import Dict, List, Optional
+import os
 import uvicorn
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi import FastAPI, HTTPException, Request
@@ -18,23 +19,31 @@ agent: Optional[EnergyMCPAgent] = None
 async def lifespan(app: FastAPI):
     global agent
     # Startup
-    print("🚀 Starting Energy MCP Agent...")
+    print("🚀 Starting IAM MCP Agent...")
     agent = EnergyMCPAgent()
     await agent.connect()
-    print("✅ Energy MCP Agent + MCP Server connected successfully")
+    print("✅ IAM MCP Agent + MCP Server connected successfully")
     yield
     # Shutdown
     if agent:
         await agent.close()
-    print("👋 Energy MCP Agent shutdown")
+    print("👋 IAM MCP Agent shutdown")
 
 
-app = FastAPI(title="Energy MCP Agent API", lifespan=lifespan)
+app = FastAPI(title="IAM MCP Agent API", lifespan=lifespan)
 
-# CORS
+# CORS — comma-separated override via CORS_ALLOW_ORIGINS
+_allow_origins = [
+    origin.strip()
+    for origin in os.getenv(
+        "CORS_ALLOW_ORIGINS",
+        "http://localhost:3000,http://127.0.0.1:3000",
+    ).split(",")
+    if origin.strip()
+]
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://127.0.0.1:3000"],
+    allow_origins=_allow_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -76,10 +85,13 @@ async def chat(payload: ChatRequest, request: Request):
         elif auth_header:
             jwt_token = auth_header.strip()
 
-        if jwt_token:
-            logging.info(f"Received request with token (length: {len(jwt_token)})")
-        else:
-            logging.warning("Request received without Authorization header")
+        if not jwt_token:
+            raise HTTPException(
+                status_code=401,
+                detail="Missing Authorization header. Send 'Authorization: Bearer <token>'.",
+            )
+
+        logging.info("Received request with token (length: %d)", len(jwt_token))
 
         final_content = await agent.chat(
             user_query=payload.message,
@@ -92,6 +104,8 @@ async def chat(payload: ChatRequest, request: Request):
             toolCalls=[]
         )
 
+    except HTTPException:
+        raise
     except Exception as e:
         logging.error(f"Error in /chat endpoint: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail="Internal server error")
@@ -111,8 +125,7 @@ async def health():
 
     try:
         # Get list of tools from the agent
-        tool_names = [tool["function"]["name"] for tool in agent.ollama_tools]
-        # or alternatively: [t.name for t in agent.tools] if you have raw tools
+        tool_names = [tool["function"]["name"] for tool in agent.tools]
 
         return HealthResponse(
             status="healthy",
@@ -134,7 +147,7 @@ async def health():
 @app.get("/tools")
 async def list_tools():
     """Return all available MCP tools"""
-    if not agent or not hasattr(agent, "ollama_tools"):
+    if not agent or not hasattr(agent, "tools"):
         return {"tools": [], "count": 0, "message": "Agent not ready"}
 
     tools_list = [
@@ -143,7 +156,7 @@ async def list_tools():
             "name": tool["function"]["name"],
             "description": tool["function"].get("description", ""),
         }
-        for idx, tool in enumerate(agent.ollama_tools)
+        for idx, tool in enumerate(agent.tools)
     ]
     return {
         "tools": tools_list,
@@ -168,7 +181,7 @@ async def clear_history():
 @app.get("/")
 async def root():
     return {
-        "name": "Energy MCP Agent API",
+        "name": "IAM MCP Agent API",
         "version": "1.0",
         "endpoints": ["/chat", "/health", "/tools"],
         "status": "running",

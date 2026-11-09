@@ -1,8 +1,9 @@
 # Python-generated files
-mcp-server-client/.idea
+.idea
 __pycache__/
-../.env
-.idea/workspace.xml
+.env
+.env.*
+!.env.example
 *.py[oc]
 build/
 dist/
@@ -11,6 +12,18 @@ wheels/
 
 # Virtual environments
 .venv
-.env
 .evn
 .idea/misc.xml
+
+# Logs / OS
+*.log
+.DS_Store
+
+# Terraform state / secrets (deploy/)
+.terraform/
+.terraform.lock.hcl
+*.tfstate
+*.tfstate.*
+crash.log
+terraform.tfvars
+*.auto.tfvars

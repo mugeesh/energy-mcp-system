@@ -1,0 +1,12 @@
+aws_region             = "us-east-1"
+instance_type          = "t3.micro"
+reference_instance_id  = "i-0dea36dc6abf6749d"
+ssh_security_group_id  = "sg-02e544f5d335d5127"
+
+# Optional overrides:
+# key_name               = "Neo4J_staging"
+# subnet_id              = "subnet-b643f2fc"
+# iam_instance_profile   = "S3FullBackup"
+# mcp_security_group_id  = "sg-0585276470a82e032"   # existing 8080 SG
+# mcp_ingress_cidrs      = ["203.0.113.10/32"]      # alternative: let Terraform create the SG
+# ssh_private_key_path   = ""   # set only if you pass -i <key.pem>; empty uses ssh-agent
