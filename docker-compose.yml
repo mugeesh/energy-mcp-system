@@ -19,6 +19,7 @@ services:
       MCP_HTTP_PATH: /mcp
       LOG_LEVEL: ${LOG_LEVEL:-INFO}
       IAM_URL: ${IAM_URL:-https://iam.staging.energybox.com}
+      IAM_API_PREFIX: ${IAM_API_PREFIX:-/api/v1}
       ts_api_url: ${ts_api_url:-}
     # Loopback-only by default; the client reaches it over the compose network.
     ports:
@@ -54,6 +55,7 @@ services:
       DEEPSEEK_MODEL: ${DEEPSEEK_MODEL:-deepseek-chat}
       DEEPSEEK_TEMPERATURE: ${DEEPSEEK_TEMPERATURE:-0.2}
       IAM_URL: ${IAM_URL:-https://iam.staging.energybox.com}
+      IAM_API_PREFIX: ${IAM_API_PREFIX:-/api/v1}
       ts_api_url: ${ts_api_url:-}
       MCP_MAX_HISTORY: ${MCP_MAX_HISTORY:-12}
       MCP_MAX_STEPS: ${MCP_MAX_STEPS:-8}

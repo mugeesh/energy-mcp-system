@@ -37,8 +37,7 @@ class SiteLookUp:
 
         try:
             logger.info("Fetching sites from Energybox API...")
-            response = self.iam_client.get_all_sites()
-            self.sites_cache = response.json()
+            self.sites_cache = self.iam_client.get_all_sites()
             # Build lookup dictionary
             self.site_lookup = {}
             for site in self.sites_cache:

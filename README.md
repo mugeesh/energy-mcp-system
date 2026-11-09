@@ -72,6 +72,7 @@ curl http://localhost:8000/tools
 | `MCP_SERVER_URL` | `http://127.0.0.1:8001/mcp` | Used in HTTP mode |
 | `MCP_SERVER_PATH` | `mcp-server-client/mcp_server` | Used in stdio mode |
 | `IAM_URL` | staging IAM | IAM base URL |
+| `IAM_API_PREFIX` | `/api/v1` | Path prefix for IAM routes (`/api/v1/sites`, `/api/v1/users`) |
 | `AUTH_TOKEN` | — | Local stdio fallback only; HTTP uses the FE Bearer token |
 | `ts_api_url` | — | Time-series / energy API base URL |
 | `CORS_ALLOW_ORIGINS` | localhost:3000 | UI origins |

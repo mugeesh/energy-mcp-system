@@ -37,8 +37,7 @@ class UserLookUp:
 
         try:
             logger.info("Fetching users from Energybox API...")
-            response = self.iam_client.get_all_users()
-            self.users_cache = response.json()
+            self.users_cache = self.iam_client.get_all_users()
             # Build lookup dictionary
             self.user_lookup = {}
             for eb_user in self.users_cache:
