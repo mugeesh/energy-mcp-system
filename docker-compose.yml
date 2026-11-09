@@ -20,7 +20,7 @@ services:
       LOG_LEVEL: ${LOG_LEVEL:-INFO}
       IAM_URL: ${IAM_URL:-https://iam.staging.energybox.com}
       IAM_API_PREFIX: ${IAM_API_PREFIX:-/api/v1}
-      ts_api_url: ${ts_api_url:-}
+      ts_api_url: ${ts_api_url:-https://ts.staging.energybox.com}
     # Loopback-only by default; the client reaches it over the compose network.
     ports:
       - "127.0.0.1:${MCP_SERVER_PORT:-8001}:8001"
@@ -56,7 +56,7 @@ services:
       DEEPSEEK_TEMPERATURE: ${DEEPSEEK_TEMPERATURE:-0.2}
       IAM_URL: ${IAM_URL:-https://iam.staging.energybox.com}
       IAM_API_PREFIX: ${IAM_API_PREFIX:-/api/v1}
-      ts_api_url: ${ts_api_url:-}
+      ts_api_url: ${ts_api_url:-https://ts.staging.energybox.com}
       MCP_MAX_HISTORY: ${MCP_MAX_HISTORY:-12}
       MCP_MAX_STEPS: ${MCP_MAX_STEPS:-8}
       CORS_ALLOW_ORIGINS: ${CORS_ALLOW_ORIGINS:-http://localhost:3000,http://127.0.0.1:3000}

@@ -74,7 +74,7 @@ curl http://localhost:8000/tools
 | `IAM_URL` | staging IAM | IAM base URL |
 | `IAM_API_PREFIX` | `/api/v1` | Path prefix for IAM routes (`/api/v1/sites`, `/api/v1/users`) |
 | `AUTH_TOKEN` | — | Local stdio fallback only; HTTP uses the FE Bearer token |
-| `ts_api_url` | — | Time-series / energy API base URL |
+| `ts_api_url` | `https://ts.staging.energybox.com` | Time-series / energy API base URL |
 | `CORS_ALLOW_ORIGINS` | localhost:3000 | UI origins |
 
 ## UI (runs locally)

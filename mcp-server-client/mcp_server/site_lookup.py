@@ -111,14 +111,12 @@ class SiteLookUp:
             Energy consumption data
         """
         try:
-            response = self.ts_api.get_energy_consumption_by_site_id(
+            data = self.ts_api.get_energy_consumption_by_site_id(
                 site_id, from_date, to_date
             )
-            data = response.json()
-            return {
-                "energy": data["energy"],
-                "unit": "kWh",
-            }
+            if isinstance(data, dict) and "energy" in data:
+                return {"energy": data["energy"], "unit": data.get("unit", "kWh")}
+            return {"data": data}
 
         except Exception as e:
             logger.error(f"Failed to get energy consumption: {e}")
